@@ -376,12 +376,9 @@
     flex-shrink: 0;
   }
 
-  /* 푸터 버튼 컴팩트: 44px → 28px */
+  /* 푸터 버튼: layout만 유지 */
   .draggable-modal__footer .button {
-    padding: var(--spacing-1) 14px;
-    min-height: 28px;
     min-width: auto;
-    font-size: 13px;
   }
 
   html[data-theme="dark"] .draggable-modal__footer {
@@ -666,23 +663,6 @@
     padding: var(--spacing-1) var(--spacing-3);
     padding-bottom: max(4px, env(safe-area-inset-bottom));
     border-radius: 0;
-  }
-
-  /* 폰 가로 모드: 푸터 버튼 컴팩트 (전역) */
-  .draggable-modal--phone-landscape .draggable-modal__footer .button {
-    padding: var(--spacing-1-5) var(--spacing-4);
-    font-size: 12px;
-    height: 32px;
-    min-height: 32px;
-    min-width: auto;
-  }
-
-  /* 모바일 세로: 푸터 버튼 컴팩트 */
-  .draggable-modal--mobile .draggable-modal__footer .button {
-    padding: var(--spacing-1-5) var(--spacing-4);
-    font-size: 13px;
-    height: 32px;
-    min-height: 32px;
   }
 
   /* === 터치 기기: 헤더 버튼 터치 영역 확대 === */

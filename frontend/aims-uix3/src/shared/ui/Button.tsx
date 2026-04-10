@@ -19,6 +19,13 @@ export type ButtonVariant =
 
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
+/**
+ * 아이콘 사용 가이드 (이슈 #56)
+ * - 기본: 텍스트 단독 권장. 아이콘 없이 의미가 충분하면 붙이지 않음
+ * - 허용: 동작 유형을 보강하는 기능 아이콘 (plus, arrow.down, arrow.up.right.square, trash, arrow.clockwise 등)
+ * - 금지: 사이드바 메뉴 아이콘을 CTA 장식으로 재활용 — 버튼이 네비게이션으로 오인됨
+ * - destructive: 텍스트 단독 권장. "삭제" 단어만큼 강한 시그널은 없음
+ */
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** 버튼의 시각적 스타일 변형 */
   variant?: ButtonVariant;
@@ -85,7 +92,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       variant = 'primary',
-      size = 'md',
+      size = 'sm',
       loading = false,
       fullWidth = false,
       leftIcon,

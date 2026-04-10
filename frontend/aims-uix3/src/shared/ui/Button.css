@@ -16,10 +16,9 @@
     white-space: nowrap;
     user-select: none;
 
-    /* 테두리 */
+    /* 테두리 (이슈 #56: border-radius는 size별로 지정) */
     border-width: 1px;
     border-style: solid;
-    border-radius: var(--radius-md);
 
     /* 타이포그래피 */
     font-family: var(--font-family-primary);
@@ -45,18 +44,23 @@
     contain: layout style;
     backface-visibility: hidden;
 
-    /* 상호작용 */
+    /* 상호작용 — 이슈 #56: 일관된 transition */
     cursor: pointer;
     transition:
-      background-color var(--duration-micro-smooth) var(--easing-micro-hover-lift),
-      border-color var(--duration-micro-smooth) var(--easing-micro-hover-lift),
-      color var(--duration-micro-smooth) var(--easing-micro-hover-lift),
+      background-color 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      border-color 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      color 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
       box-shadow var(--duration-micro-quick) var(--easing-micro-focus-ring),
-      transform var(--duration-micro-instant) var(--easing-micro-press-down); /* 정밀한 Press State */
+      transform 100ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
     /* 포커스 관리 - WCAG 2.1 AAA 준수 */
     outline: 2px solid transparent;
     outline-offset: 2px;
+  }
+
+  /* 이슈 #56: 모든 variant 공통 active scale (0.97) */
+  .button:active:not(:disabled) {
+    transform: scale(0.97);
   }
 
   .button:focus-visible {
@@ -89,35 +93,43 @@
     }
   }
 
-  /* === SIZE VARIANTS === */
+  /* === SIZE VARIANTS === 이슈 #56 재설계 */
 
   .button--sm {
-    gap: var(--spacing-1);
-    padding: var(--spacing-1) var(--spacing-3);
-    /* font-size: var(--font-size-sm); () */
-    min-height: 1.875rem; /* 44px - iOS 최소 터치 영역 표준 */
-    min-width: auto;  /* 44px - iOS 최소 터치 영역 너비 보장 */
+    gap: 3px;
+    padding: 2px 10px;
+    font-size: 12px;
+    min-height: 24px;
+    min-width: auto;
+    border-radius: 6px;
   }
 
   .button--md {
-    gap: var(--spacing-2);
-    padding: var(--spacing-3) var(--spacing-4);
-    /* font-size: var(--font-size-base); () */
-    min-height: 2.75rem; /* 44px - iOS 최소 터치 영역 표준 */
-    min-width: 2.75rem;  /* 44px - iOS 최소 터치 영역 너비 보장 */
+    gap: 4px;
+    padding: 4px 12px;
+    font-size: 13px;
+    min-height: 28px;
+    min-width: auto;
+    border-radius: 7px;
   }
 
   .button--lg {
-    gap: var(--spacing-2);
-    padding: var(--spacing-4) var(--spacing-6);
-    /* font-size: var(--font-size-lg); () */
-    min-height: 3rem; /* 48px */
-    min-width: 3rem;  /* 48px - 일관된 터치 영역 보장 */
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    min-height: 36px;
+    min-width: auto;
+    border-radius: 8px;
   }
 
   /* === STYLE VARIANTS === */
 
-  /* Primary Button */
+  /* === STYLE VARIANTS === 이슈 #56 재설계
+   * hover: 배경색 변화만 (transform 없음)
+   * active: 공통 .button:active 규칙으로 scale(0.97) 단일 통일
+   */
+
+  /* Primary Button — iOS systemBlue */
   .button--primary {
     background-color: var(--color-button-primary-bg);
     border-color: var(--color-button-primary-bg);
@@ -129,56 +141,18 @@
     border-color: var(--color-button-primary-bg-hover);
   }
 
-  .button--primary:active:not(:disabled) {
-    background-color: var(--color-button-primary-bg-active);
-    border-color: var(--color-button-primary-bg-active);
-    transform: translateY(1px) scale(0.98); /* iOS 17+ 정밀 Press State */
-    transition:
-      background-color var(--duration-micro-instant) var(--easing-micro-press-down),
-      border-color var(--duration-micro-instant) var(--easing-micro-press-down),
-      transform var(--duration-micro-instant) var(--easing-micro-press-down);
-  }
-
-  .button--primary:not(:active):not(:disabled) {
-    transition:
-      background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
-      border-color var(--duration-micro-smooth) var(--easing-micro-press-up),
-      transform var(--duration-micro-smooth) var(--easing-micro-press-up);
-  }
-
-  /* Secondary Button */
+  /* Secondary Button — iOS Gray Fill (이슈 #56) */
   .button--secondary {
-    background-color: var(--color-button-secondary-bg-light);
+    background-color: var(--color-button-secondary-bg);
     border-color: var(--color-button-secondary-border);
     color: var(--color-button-secondary-text);
   }
 
-  [data-theme="dark"] .button--secondary {
-    background-color: var(--color-button-secondary-bg-dark);
-  }
-
   .button--secondary:hover:not(:disabled) {
-    background-color: var(--color-button-secondary-hover-light);
+    background-color: var(--color-button-secondary-bg-hover);
   }
 
-  [data-theme="dark"] .button--secondary:hover:not(:disabled) {
-    background-color: var(--color-button-secondary-hover-dark);
-  }
-  .button--secondary:active:not(:disabled) {
-    background-color: var(--color-button-secondary-bg-active);
-    transform: translateY(1px) scale(0.985); /* 더 서브틀한 Press State */
-    transition:
-      background-color var(--duration-micro-instant) var(--easing-micro-press-down),
-      transform var(--duration-micro-instant) var(--easing-micro-press-down);
-  }
-
-  .button--secondary:not(:active):not(:disabled) {
-    transition:
-      background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
-      transform var(--duration-micro-smooth) var(--easing-micro-press-up);
-  }
-
-  /* Ghost Button */
+  /* Ghost Button — 투명 배경 + subtle hover */
   .button--ghost {
     background-color: var(--color-button-ghost-bg);
     border-color: transparent;
@@ -189,21 +163,7 @@
     background-color: var(--color-button-ghost-bg-hover);
   }
 
-  .button--ghost:active:not(:disabled) {
-    background-color: var(--color-button-ghost-bg-active);
-    transform: translateY(0.5px) scale(0.99); /* 매우 서브틀한 Press State */
-    transition:
-      background-color var(--duration-micro-instant) var(--easing-micro-press-down),
-      transform var(--duration-micro-instant) var(--easing-micro-press-down);
-  }
-
-  .button--ghost:not(:active):not(:disabled) {
-    transition:
-      background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
-      transform var(--duration-micro-smooth) var(--easing-micro-press-up);
-  }
-
-  /* Destructive Button */
+  /* Destructive Button — iOS systemRed */
   .button--destructive {
     background-color: var(--color-button-destructive-bg);
     border-color: var(--color-button-destructive-bg);
@@ -215,48 +175,27 @@
     border-color: var(--color-button-destructive-bg-hover);
   }
 
-  .button--destructive:active:not(:disabled) {
-    background-color: var(--color-button-destructive-bg-hover);
-    border-color: var(--color-button-destructive-bg-hover);
-    transform: translateY(1.5px) scale(0.975); /* 강조된 Press State (위험한 액션) */
-    transition:
-      background-color var(--duration-micro-instant) var(--easing-micro-press-down),
-      border-color var(--duration-micro-instant) var(--easing-micro-press-down),
-      transform var(--duration-micro-instant) var(--easing-micro-press-down);
-  }
-
-  .button--destructive:not(:active):not(:disabled) {
-    transition:
-      background-color var(--duration-micro-smooth) var(--easing-micro-press-up),
-      border-color var(--duration-micro-smooth) var(--easing-micro-press-up),
-      transform var(--duration-micro-smooth) var(--easing-micro-press-up);
-  }
-
-  /* Link Button */
+  /* Link Button — 텍스트 링크 스타일 */
   .button--link {
-    background-color: var(--color-button-ghost-bg-light);
+    background-color: transparent;
     border-color: transparent;
-    color: var(--color-primary-600);
-    text-decoration: underline;
+    color: var(--color-button-primary-bg);
+    text-decoration: none;
     padding: var(--spacing-1) var(--spacing-2);
     min-height: auto;
   }
 
   .button--link:hover:not(:disabled) {
-    color: var(--color-primary-700);
-    text-decoration: none;
-  }
-
-  .button--link:active:not(:disabled) {
-    color: var(--color-primary-800);
+    background-color: transparent;
+    text-decoration: underline;
   }
 
   /* === STATE MODIFIERS === */
 
-  /* Disabled State */
+  /* Disabled State — 이슈 #56: 0.5 → 0.4 */
   .button:disabled,
   .button--disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
     pointer-events: none;
   }
@@ -289,20 +228,20 @@
     height: 1em;
   }
 
-  /* 크기별 아이콘 조정 */
+  /* 크기별 아이콘 조정 — 이슈 #56 */
   .button--sm .button__icon svg {
-    width: 0.875rem;
-    height: 0.875rem;
+    width: 10px;
+    height: 10px;
   }
 
   .button--md .button__icon svg {
-    width: 1rem;
-    height: 1rem;
+    width: 12px;
+    height: 12px;
   }
 
   .button--lg .button__icon svg {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 14px;
+    height: 14px;
   }
 
   /* === LOADING SPINNER === */

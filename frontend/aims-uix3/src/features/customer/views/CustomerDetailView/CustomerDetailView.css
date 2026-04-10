@@ -378,12 +378,6 @@
       gap: var(--spacing-1-5);
     }
 
-    .customer-detail-view__actions > .button {
-      min-height: 32px;
-      font-size: var(--font-size-caption-2);
-      padding: var(--spacing-1) var(--spacing-2);
-    }
-
     .tabs-bar.customer-detail-view__tabs {
       margin-bottom: var(--spacing-2);
     }

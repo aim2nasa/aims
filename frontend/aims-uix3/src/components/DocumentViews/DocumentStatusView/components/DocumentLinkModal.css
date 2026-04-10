@@ -263,13 +263,6 @@
     position: relative; /* 드롭다운 위치 기준 */
   }
 
-  /* 고객선택 버튼 높이 (B) - A 영역과 동일 */
-  .document-link-modal__customer-selection .button {
-    height: 36px;
-    min-height: 36px;
-    max-height: 36px;
-  }
-
   /* 🍎 고객 선택 영역 - 선택됨/미선택 상태 모두 처리 */
   .document-link-modal__selected-customer {
     display: flex;

@@ -448,7 +448,7 @@
   }
 
   html[data-theme="dark"] .snapshot-item--changed {
-    color: var(--color-button-destructive-bg-dark, #ff453a);
+    color: var(--color-button-destructive-bg);
   }
 
 } /* end @layer components */

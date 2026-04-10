@@ -68,7 +68,7 @@ describe('Button', () => {
       expect(button).toHaveClass('button--sm')
     })
 
-    it('medium 크기 적용 (기본값)', () => {
+    it('medium 크기 적용', () => {
       render(<Button size="md">Medium</Button>)
 
       const button = screen.getByRole('button')
@@ -80,6 +80,16 @@ describe('Button', () => {
 
       const button = screen.getByRole('button')
       expect(button).toHaveClass('button--lg')
+    })
+
+    // 이슈 #56: default size가 sm으로 변경됨
+    it('size 미지정 시 기본값은 sm', () => {
+      render(<Button>Default Size</Button>)
+
+      const button = screen.getByRole('button')
+      expect(button).toHaveClass('button--sm')
+      expect(button).not.toHaveClass('button--md')
+      expect(button).not.toHaveClass('button--lg')
     })
   })
 

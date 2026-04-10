@@ -57,10 +57,6 @@
 
   /* 고객 선택 버튼 스타일 */
   .customer-file-upload-area__main-row .button {
-    height: 36px;
-    min-height: 36px;
-    max-height: 36px;
-    font-size: var(--font-size-footnote);
     font-weight: 600;
     white-space: nowrap;
     flex-shrink: 0;
