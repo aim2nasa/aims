@@ -305,22 +305,6 @@
       padding: var(--spacing-0-5) var(--spacing-1-5);
     }
 
-    /* 가족 선택 버튼: min-height 오버라이드 필수 (.button--md의 44px 제거) */
-    .relationship-modal__selector-button.button {
-      padding: var(--spacing-1-5) 10px;
-      font-size: var(--font-size-caption-1);
-      min-height: 36px;
-      height: 36px;
-    }
-
-    /* footer 버튼: min-height 오버라이드 */
-    .relationship-modal__actions .button {
-      padding: var(--spacing-1-5) var(--spacing-3);
-      font-size: var(--font-size-caption-1);
-      min-height: 32px;
-      height: 32px;
-    }
-
     .relationship-modal .form-select {
       padding: var(--spacing-1) var(--spacing-2);
       font-size: var(--font-size-caption-1);
@@ -369,22 +353,6 @@
     .relationship-modal__badge {
       font-size: 10px;
       padding: var(--spacing-0-5) var(--spacing-1-5);
-    }
-
-    /* 가족 선택 버튼: 울트라 컴팩트 */
-    .relationship-modal__selector-button.button {
-      padding: 5px 10px;
-      font-size: var(--font-size-caption-1);
-      min-height: 30px;
-      height: 30px;
-    }
-
-    /* footer 버튼: 울트라 컴팩트 */
-    .relationship-modal__actions .button {
-      padding: var(--spacing-1) var(--spacing-3);
-      font-size: var(--font-size-caption-1);
-      min-height: 28px;
-      height: 28px;
     }
 
     .relationship-modal .form-select {

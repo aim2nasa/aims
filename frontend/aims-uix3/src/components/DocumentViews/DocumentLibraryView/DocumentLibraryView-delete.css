@@ -295,11 +295,6 @@
     background: linear-gradient(135deg, #7b5af2, #5856d6, #af52de);
     border: none;
     color: #fff;
-    gap: var(--spacing-1);
-    padding: var(--spacing-1) var(--spacing-3);
-    min-height: 24px;
-    border-radius: 6px;
-    font-size: var(--font-size-caption-1);
     font-weight: 600;
     box-shadow: 0 1px 4px rgba(88, 86, 214, 0.35);
     transition:

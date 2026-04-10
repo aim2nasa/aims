@@ -93,13 +93,9 @@
     padding: 0 var(--spacing-4) var(--spacing-4) var(--spacing-4);
   }
 
-  /* 공용 Button 컴포넌트 사용 — Alert 컨텍스트 크기 오버라이드 */
+  /* 공용 Button 컴포넌트 사용 — layout만 오버라이드 */
   .apple-confirm-modal__actions .button {
     flex: 1;
-    min-height: 34px;
-    padding: var(--spacing-1-5) var(--spacing-4);
-    border-radius: 8px;
-    font-size: var(--font-size-footnote);
   }
 
   /* iOS Alert 규칙: 주요 액션은 semibold, 보조 액션은 regular */

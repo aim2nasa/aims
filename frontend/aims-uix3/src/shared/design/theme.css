@@ -41,26 +41,26 @@
     --color-border-error: var(--color-error-500);
     --color-border-disabled: var(--color-neutral-200);
 
-    /* Button Colors */
-    --color-button-primary-bg: var(--color-primary-600);
-    --color-button-primary-bg-hover: var(--color-primary-700);
-    --color-button-primary-bg-active: var(--color-primary-800);
-    --color-button-primary-text: var(--color-neutral-0);
+    /* Button Colors — iOS 표준 (이슈 #56 재설계, Light) */
+    --color-button-primary-bg: #0a84ff;                 /* iOS systemBlue */
+    --color-button-primary-bg-hover: #3399ff;           /* +8% lightness */
+    --color-button-primary-bg-active: #3399ff;
+    --color-button-primary-text: #ffffff;
 
-    --color-button-secondary-bg: var(--color-neutral-0);
-    --color-button-secondary-bg-hover: var(--color-neutral-50);
-    --color-button-secondary-bg-active: var(--color-neutral-100);
-    --color-button-secondary-text: var(--color-neutral-700);
-    --color-button-secondary-border: var(--color-neutral-300);
+    --color-button-secondary-bg: #f2f2f7;               /* iOS systemGray6 */
+    --color-button-secondary-bg-hover: #e5e5ea;         /* iOS systemGray5 */
+    --color-button-secondary-bg-active: #e5e5ea;
+    --color-button-secondary-text: var(--color-text-primary);
+    --color-button-secondary-border: transparent;
 
     --color-button-ghost-bg: transparent;
-    --color-button-ghost-bg-hover: var(--color-neutral-100);
-    --color-button-ghost-bg-active: var(--color-neutral-200);
-    --color-button-ghost-text: var(--color-neutral-700);
+    --color-button-ghost-bg-hover: rgba(0, 0, 0, 0.05);
+    --color-button-ghost-bg-active: rgba(0, 0, 0, 0.05);
+    --color-button-ghost-text: var(--color-text-secondary);
 
-    --color-button-destructive-bg: var(--color-error-600);
-    --color-button-destructive-bg-hover: var(--color-error-700);
-    --color-button-destructive-text: var(--color-neutral-0);
+    --color-button-destructive-bg: #ff3b30;             /* iOS systemRed */
+    --color-button-destructive-bg-hover: #ff6961;
+    --color-button-destructive-text: #ffffff;
 
     --color-button-dev-bg: rgba(255, 149, 0, 0.15);
     --color-button-dev-bg-hover: rgba(255, 149, 0, 0.25);
@@ -242,26 +242,26 @@
     --color-border-error: var(--color-error-400);
     --color-border-disabled: var(--color-neutral-700);
 
-    /* Button Colors */
-    --color-button-primary-bg: var(--color-primary-500);
-    --color-button-primary-bg-hover: var(--color-primary-400);
-    --color-button-primary-bg-active: var(--color-primary-300);
-    --color-button-primary-text: var(--color-neutral-0);
+    /* Button Colors — iOS 표준 (이슈 #56 재설계, Dark) */
+    --color-button-primary-bg: #0a84ff;
+    --color-button-primary-bg-hover: #409cff;
+    --color-button-primary-bg-active: #409cff;
+    --color-button-primary-text: #ffffff;
 
-    --color-button-secondary-bg: var(--color-neutral-800);
-    --color-button-secondary-bg-hover: var(--color-neutral-700);
-    --color-button-secondary-bg-active: var(--color-neutral-600);
-    --color-button-secondary-text: var(--color-neutral-200);
-    --color-button-secondary-border: var(--color-neutral-600);
+    --color-button-secondary-bg: #2c2c2e;               /* 다크 systemGray5 */
+    --color-button-secondary-bg-hover: #3a3a3c;         /* systemGray4 */
+    --color-button-secondary-bg-active: #3a3a3c;
+    --color-button-secondary-text: var(--color-text-primary);
+    --color-button-secondary-border: transparent;
 
     --color-button-ghost-bg: transparent;
-    --color-button-ghost-bg-hover: var(--color-neutral-800);
-    --color-button-ghost-bg-active: var(--color-neutral-700);
-    --color-button-ghost-text: var(--color-neutral-200);
+    --color-button-ghost-bg-hover: rgba(255, 255, 255, 0.08);
+    --color-button-ghost-bg-active: rgba(255, 255, 255, 0.08);
+    --color-button-ghost-text: var(--color-text-secondary);
 
-    --color-button-destructive-bg: var(--color-error-600);
-    --color-button-destructive-bg-hover: var(--color-error-500);
-    --color-button-destructive-text: var(--color-neutral-0);
+    --color-button-destructive-bg: #ff453a;
+    --color-button-destructive-bg-hover: #ff6961;
+    --color-button-destructive-text: #ffffff;
 
     --color-button-dev-bg: rgba(255, 149, 0, 0.15);
     --color-button-dev-bg-hover: rgba(255, 149, 0, 0.25);
@@ -481,25 +481,26 @@
       --color-border-error: var(--color-error-400);
       --color-border-disabled: var(--color-neutral-700);
 
-      --color-button-primary-bg: var(--color-primary-500);
-      --color-button-primary-bg-hover: var(--color-primary-400);
-      --color-button-primary-bg-active: var(--color-primary-300);
-      --color-button-primary-text: var(--color-neutral-0);
+      /* Button Colors — iOS 표준 (이슈 #56, System Dark) */
+      --color-button-primary-bg: #0a84ff;
+      --color-button-primary-bg-hover: #409cff;
+      --color-button-primary-bg-active: #409cff;
+      --color-button-primary-text: #ffffff;
 
-      --color-button-secondary-bg: var(--color-neutral-800);
-      --color-button-secondary-bg-hover: var(--color-neutral-700);
-      --color-button-secondary-bg-active: var(--color-neutral-600);
-      --color-button-secondary-text: var(--color-neutral-200);
-      --color-button-secondary-border: var(--color-neutral-600);
+      --color-button-secondary-bg: #2c2c2e;
+      --color-button-secondary-bg-hover: #3a3a3c;
+      --color-button-secondary-bg-active: #3a3a3c;
+      --color-button-secondary-text: var(--color-text-primary);
+      --color-button-secondary-border: transparent;
 
       --color-button-ghost-bg: transparent;
-      --color-button-ghost-bg-hover: var(--color-neutral-800);
-      --color-button-ghost-bg-active: var(--color-neutral-700);
-      --color-button-ghost-text: var(--color-neutral-200);
+      --color-button-ghost-bg-hover: rgba(255, 255, 255, 0.08);
+      --color-button-ghost-bg-active: rgba(255, 255, 255, 0.08);
+      --color-button-ghost-text: var(--color-text-secondary);
 
-      --color-button-destructive-bg: var(--color-error-600);
-      --color-button-destructive-bg-hover: var(--color-error-500);
-      --color-button-destructive-text: var(--color-neutral-0);
+      --color-button-destructive-bg: #ff453a;
+      --color-button-destructive-bg-hover: #ff6961;
+      --color-button-destructive-text: #ffffff;
 
       --color-input-bg: var(--color-neutral-800);
       --color-input-bg-disabled: var(--color-neutral-900);
@@ -580,25 +581,26 @@
       --color-border-error: var(--color-error-500);
       --color-border-disabled: var(--color-neutral-200);
 
-      --color-button-primary-bg: var(--color-primary-600);
-      --color-button-primary-bg-hover: var(--color-primary-700);
-      --color-button-primary-bg-active: var(--color-primary-800);
-      --color-button-primary-text: var(--color-neutral-0);
+      /* Button Colors — iOS 표준 (이슈 #56, System Light) */
+      --color-button-primary-bg: #0a84ff;
+      --color-button-primary-bg-hover: #3399ff;
+      --color-button-primary-bg-active: #3399ff;
+      --color-button-primary-text: #ffffff;
 
-      --color-button-secondary-bg: var(--color-neutral-0);
-      --color-button-secondary-bg-hover: var(--color-neutral-50);
-      --color-button-secondary-bg-active: var(--color-neutral-100);
-      --color-button-secondary-text: var(--color-neutral-700);
-      --color-button-secondary-border: var(--color-neutral-300);
+      --color-button-secondary-bg: #f2f2f7;
+      --color-button-secondary-bg-hover: #e5e5ea;
+      --color-button-secondary-bg-active: #e5e5ea;
+      --color-button-secondary-text: var(--color-text-primary);
+      --color-button-secondary-border: transparent;
 
       --color-button-ghost-bg: transparent;
-      --color-button-ghost-bg-hover: var(--color-neutral-100);
-      --color-button-ghost-bg-active: var(--color-neutral-200);
-      --color-button-ghost-text: var(--color-neutral-700);
+      --color-button-ghost-bg-hover: rgba(0, 0, 0, 0.05);
+      --color-button-ghost-bg-active: rgba(0, 0, 0, 0.05);
+      --color-button-ghost-text: var(--color-text-secondary);
 
-      --color-button-destructive-bg: var(--color-error-600);
-      --color-button-destructive-bg-hover: var(--color-error-700);
-      --color-button-destructive-text: var(--color-neutral-0);
+      --color-button-destructive-bg: #ff3b30;
+      --color-button-destructive-bg-hover: #ff6961;
+      --color-button-destructive-text: #ffffff;
 
       --color-input-bg: var(--color-neutral-0);
       --color-input-bg-disabled: var(--color-neutral-50);

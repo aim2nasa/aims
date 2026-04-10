@@ -367,7 +367,7 @@
   }
 
   html[data-theme="dark"] .cr-snapshot-item--changed {
-    color: var(--color-button-destructive-bg-dark, #ff453a);
+    color: var(--color-button-destructive-bg);
   }
 
   /* === 🍎 순번 뱃지: 변액 리포트 클릭 가능 (AR이력/변액리포트이력 공통) === */
