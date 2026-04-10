@@ -435,7 +435,7 @@ describe('UploadSummary', () => {
       mockOnContinue.mockClear()
     })
 
-    it('전체 성공: [계속 일괄등록(Secondary)] [전체 문서 보기(Primary)]', () => {
+    it('전체 성공: [전체 문서 보기(Secondary)] [문서 일괄등록(Primary)] + 안내', () => {
       render(
         <UploadSummary
           progress={createMockProgress({ state: 'completed', completedFiles: 10, totalFiles: 10, failedFiles: 0 })}
@@ -445,16 +445,29 @@ describe('UploadSummary', () => {
         />
       )
 
-      expect(screen.getByText('계속 일괄등록')).toBeInTheDocument()
-      expect(screen.getByText('전체 문서 보기')).toBeInTheDocument()
+      // 다음 작업 안내 섹션이 표시됨
+      expect(screen.getByText('다음 작업을 선택하세요')).toBeInTheDocument()
+      expect(screen.getByText('— 방금 업로드한 문서 처리 상태 확인')).toBeInTheDocument()
+      expect(screen.getByText('— 다른 문서 폴더들 일괄 업로드')).toBeInTheDocument()
 
-      // Primary 버튼(전체 문서 보기) 클릭
-      fireEvent.click(screen.getByText('전체 문서 보기'))
-      expect(mockOnViewDocuments).toHaveBeenCalled()
+      // 버튼 라벨 (안내 섹션의 <strong>과 중복되므로 getAllByText 사용)
+      expect(screen.getAllByText('전체 문서 보기').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('문서 일괄등록').length).toBeGreaterThan(0)
+      expect(screen.queryByText('계속 일괄등록')).not.toBeInTheDocument()
 
-      // Secondary 버튼(계속 일괄등록) 클릭
-      fireEvent.click(screen.getByText('계속 일괄등록'))
+      // 사이드바와 동일한 아이콘 사용 (archivebox, books-vertical)
+      expect(screen.getByTestId('sf-symbol-archivebox')).toBeInTheDocument()
+      expect(screen.getByTestId('sf-symbol-books-vertical')).toBeInTheDocument()
+
+      // Primary 버튼(문서 일괄등록) 클릭
+      const primaryBtn = screen.getAllByText('문서 일괄등록').find(el => el.closest('button'))?.closest('button')!
+      fireEvent.click(primaryBtn)
       expect(mockOnContinue).toHaveBeenCalled()
+
+      // Secondary 버튼(전체 문서 보기) 클릭
+      const secondaryBtn = screen.getAllByText('전체 문서 보기').find(el => el.closest('button'))?.closest('button')!
+      fireEvent.click(secondaryBtn)
+      expect(mockOnViewDocuments).toHaveBeenCalled()
     })
 
     it('부분 실패 (재시도 가능): [전체 문서 보기(Secondary)] [실패 항목 재시도(Primary)]', () => {
@@ -483,7 +496,7 @@ describe('UploadSummary', () => {
       expect(mockOnRetryFailed).toHaveBeenCalled()
     })
 
-    it('부분 실패 (바이러스만, 재시도 불가): [계속 일괄등록(Secondary)] [전체 문서 보기(Primary)]', () => {
+    it('부분 실패 (바이러스만, 재시도 불가): [전체 문서 보기(Secondary)] [문서 일괄등록(Primary)]', () => {
       render(
         <UploadSummary
           progress={createMockProgress({
@@ -504,8 +517,10 @@ describe('UploadSummary', () => {
 
       // 재시도 불가이므로 "실패 항목 재시도" 없음
       expect(screen.queryByText('실패 항목 재시도')).not.toBeInTheDocument()
-      expect(screen.getByText('계속 일괄등록')).toBeInTheDocument()
-      expect(screen.getByText('전체 문서 보기')).toBeInTheDocument()
+      expect(screen.queryByText('계속 일괄등록')).not.toBeInTheDocument()
+      expect(screen.getAllByText('문서 일괄등록').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('전체 문서 보기').length).toBeGreaterThan(0)
+      expect(screen.getByText('다음 작업을 선택하세요')).toBeInTheDocument()
     })
 
     it('전체 실패: [돌아가기(Secondary)] [다시 시도(Primary)]', () => {
@@ -534,7 +549,7 @@ describe('UploadSummary', () => {
       expect(mockOnContinue).toHaveBeenCalled()
     })
 
-    it('취소됨: [전체 문서 보기(Secondary)] [계속 일괄등록(Primary)]', () => {
+    it('취소됨: [전체 문서 보기(Secondary)] [문서 일괄등록(Primary)]', () => {
       render(
         <UploadSummary
           progress={createMockProgress({ state: 'cancelled', completedFiles: 5 })}
@@ -544,10 +559,12 @@ describe('UploadSummary', () => {
         />
       )
 
-      expect(screen.getByText('전체 문서 보기')).toBeInTheDocument()
-      expect(screen.getByText('계속 일괄등록')).toBeInTheDocument()
+      expect(screen.getAllByText('전체 문서 보기').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('문서 일괄등록').length).toBeGreaterThan(0)
+      expect(screen.queryByText('계속 일괄등록')).not.toBeInTheDocument()
 
-      fireEvent.click(screen.getByText('계속 일괄등록'))
+      const primaryBtn = screen.getAllByText('문서 일괄등록').find(el => el.closest('button'))?.closest('button')!
+      fireEvent.click(primaryBtn)
       expect(mockOnContinue).toHaveBeenCalled()
     })
 
@@ -572,8 +589,8 @@ describe('UploadSummary', () => {
         />
       )
 
-      const primaryBtn = screen.getByText('전체 문서 보기').closest('button')
-      const secondaryBtn = screen.getByText('계속 일괄등록').closest('button')
+      const primaryBtn = screen.getAllByText('문서 일괄등록').find(el => el.closest('button'))?.closest('button')
+      const secondaryBtn = screen.getAllByText('전체 문서 보기').find(el => el.closest('button'))?.closest('button')
       expect(primaryBtn?.className).toContain('primary')
       expect(secondaryBtn?.className).toContain('secondary')
     })

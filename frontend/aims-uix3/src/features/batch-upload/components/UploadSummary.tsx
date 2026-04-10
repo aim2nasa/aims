@@ -8,6 +8,7 @@
 
 import { useState } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol'
+import { Button } from '@/shared/ui/Button'
 import type { BatchUploadProgress } from '../hooks/useBatchUpload'
 import './UploadSummary.css'
 
@@ -242,88 +243,126 @@ export default function UploadSummary({ progress, onClose, onRetryFailed, onView
         </div>
       )}
 
-      {/* 시나리오별 CTA 버튼 */}
-      <div className="upload-summary-actions">
-        {(() => {
-          // 시나리오별 버튼 매핑 (왼쪽=Secondary, 오른쪽=Primary, Apple HIG)
-          if (isCancelled) {
-            // 취소됨: [전체 문서 보기] [계속 일괄등록]
-            return (
-              <>
-                {onViewDocuments && (
-                  <button className="upload-summary-btn secondary" onClick={onViewDocuments}>
-                    전체 문서 보기
-                  </button>
-                )}
-                <button className="upload-summary-btn primary" onClick={onContinueBatchUpload || onClose}>
-                  계속 일괄등록
-                </button>
-              </>
-            )
-          }
-          if (isFullFailure) {
-            // 전체 실패: [돌아가기] [다시 시도]
-            return (
-              <>
-                <button className="upload-summary-btn secondary" onClick={onClose}>
-                  돌아가기
-                </button>
-                <button className="upload-summary-btn primary" onClick={onContinueBatchUpload || onClose}>
-                  다시 시도
-                </button>
-              </>
-            )
-          }
-          if (isPartialSuccess && hasRetryableFailures && onRetryFailed) {
-            // 부분 실패 (재시도 가능): [전체 문서 보기] [실패 항목 재시도]
-            return (
-              <>
-                {onViewDocuments && (
-                  <button className="upload-summary-btn secondary" onClick={onViewDocuments}>
-                    전체 문서 보기
-                  </button>
-                )}
-                <button className="upload-summary-btn primary" onClick={onRetryFailed}>
+      {/* 다음 작업 안내 + 시나리오별 CTA 버튼 */}
+      {(() => {
+        // 전체 실패 / 재시도 가능 시나리오는 안내/재배치 대상 아님 (기존 동작 유지)
+        if (isFullFailure) {
+          return (
+            <div className="upload-summary-actions">
+              <Button variant="secondary" size="sm" onClick={onClose}>
+                돌아가기
+              </Button>
+              <Button variant="primary" size="sm" onClick={onContinueBatchUpload || onClose}>
+                다시 시도
+              </Button>
+            </div>
+          )
+        }
+        if (isPartialSuccess && hasRetryableFailures && onRetryFailed) {
+          return (
+            <div className="upload-summary-actions">
+              {onViewDocuments && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  leftIcon={<ViewDocumentsIcon />}
+                  onClick={onViewDocuments}
+                >
+                  전체 문서 보기
+                </Button>
+              )}
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={
                   <SFSymbol
                     name="arrow-clockwise"
                     size={SFSymbolSize.FOOTNOTE}
                     weight={SFSymbolWeight.MEDIUM}
                   />
-                  <span>실패 항목 재시도</span>
-                </button>
-              </>
-            )
-          }
-          if (isPartialSuccess) {
-            // 부분 실패 (재시도 불가): [계속 일괄등록] [전체 문서 보기]
-            return (
-              <>
-                <button className="upload-summary-btn secondary" onClick={onContinueBatchUpload || onClose}>
-                  계속 일괄등록
-                </button>
-                {onViewDocuments && (
-                  <button className="upload-summary-btn primary" onClick={onViewDocuments}>
-                    전체 문서 보기
-                  </button>
-                )}
-              </>
-            )
-          }
-          // 전체 성공: [계속 일괄등록] [전체 문서 보기]
-          return (
-            <>
-              <button className="upload-summary-btn secondary" onClick={onContinueBatchUpload || onClose}>
-                계속 일괄등록
-              </button>
-              {onViewDocuments && (
-                <button className="upload-summary-btn primary" onClick={onViewDocuments}>
-                  전체 문서 보기
-                </button>
-              )}
-            </>
+                }
+                onClick={onRetryFailed}
+              >
+                실패 항목 재시도
+              </Button>
+            </div>
           )
-        })()}
-      </div>
+        }
+
+        // 전체 성공 / 부분 실패(재시도 불가) / 취소됨:
+        // [전체 문서 보기 (Secondary, 왼쪽)] [문서 일괄등록 (Primary, 오른쪽)]
+        return (
+          <>
+            <div className="upload-summary-next-guide" role="note">
+              <div className="upload-summary-next-guide-title">다음 작업을 선택하세요</div>
+              <ul className="upload-summary-next-guide-list">
+                <li>
+                  <strong>전체 문서 보기</strong>
+                  <span> — 방금 업로드한 문서 처리 상태 확인</span>
+                </li>
+                <li>
+                  <strong>문서 일괄등록</strong>
+                  <span> — 다른 문서 폴더들 일괄 업로드</span>
+                </li>
+              </ul>
+            </div>
+            <div className="upload-summary-actions">
+              {onViewDocuments && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  leftIcon={<ViewDocumentsIcon />}
+                  onClick={onViewDocuments}
+                >
+                  전체 문서 보기
+                </Button>
+              )}
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={<BatchUploadIcon />}
+                onClick={onContinueBatchUpload || onClose}
+              >
+                문서 일괄등록
+              </Button>
+            </div>
+          </>
+        )
+      })()}
     </div>
+  )
+}
+
+/**
+ * 사이드바 "문서 일괄등록" 메뉴(MenuIcons.DocumentBatchUpload)와
+ * 100% 동일한 SFSymbol/사이즈/색상 클래스를 재현합니다.
+ * @see components/CustomMenu/CustomMenu.tsx  MenuIcons.DocumentBatchUpload
+ */
+function BatchUploadIcon() {
+  return (
+    <span className="menu-icon-cyan upload-summary-btn-icon">
+      <SFSymbol
+        name="archivebox"
+        size={SFSymbolSize.CALLOUT}
+        weight={SFSymbolWeight.MEDIUM}
+      />
+    </span>
+  )
+}
+
+/**
+ * 사이드바 "전체 문서 보기" 메뉴(MenuIcons.Library)와
+ * 100% 동일한 SFSymbol/사이즈/색상 클래스를 재현합니다.
+ * @see components/CustomMenu/CustomMenu.tsx  MenuIcons.Library
+ */
+function ViewDocumentsIcon() {
+  return (
+    <span className="menu-icon-purple upload-summary-btn-icon">
+      <SFSymbol
+        name="books-vertical"
+        size={SFSymbolSize.CALLOUT}
+        weight={SFSymbolWeight.MEDIUM}
+      />
+    </span>
   )
 }
