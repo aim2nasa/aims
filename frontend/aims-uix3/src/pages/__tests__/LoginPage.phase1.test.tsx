@@ -3,7 +3,7 @@
  * @description "다음에 간편 비밀번호로 빠르게 로그인" 체크박스 렌더링 검증
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { createElement } from 'react'
@@ -106,6 +106,23 @@ describe('LoginPage Phase 1 — 체크박스', () => {
       expect(screen.getByText('다른 카카오 계정으로 로그인')).toBeInTheDocument()
       expect(screen.getByText('다른 네이버 계정')).toBeInTheDocument()
       expect(screen.getByText('다른 구글 계정')).toBeInTheDocument()
+    })
+  })
+
+  describe('prod 환경 — 네이버/구글 버튼 숨김 (regression)', () => {
+    beforeEach(() => {
+      vi.stubEnv('PROD', true)
+    })
+
+    afterEach(() => {
+      vi.unstubAllEnvs()
+    })
+
+    it('prod에서는 카카오 로그인만 노출되고 네이버/구글 버튼은 DOM에서 제거됨', () => {
+      renderLoginPage()
+      expect(screen.getByText('카카오 로그인')).toBeInTheDocument()
+      expect(screen.queryByText('네이버 로그인')).not.toBeInTheDocument()
+      expect(screen.queryByText('구글 로그인')).not.toBeInTheDocument()
     })
   })
 })
