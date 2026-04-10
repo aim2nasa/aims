@@ -95,6 +95,9 @@ export interface ContractHistory {
 /**
  * AR 목록 → 증권번호별 계약 이력으로 변환
  *
+ * 이슈 #58: 백엔드가 영문 키로 통일되어 한/영 이중 매핑 제거.
+ * 마이그레이션 이전 레거시 문서(한글 키)는 일회성 `||` fallback 으로만 보호.
+ *
  * @param arReports 완료된 AR 목록
  * @returns 증권번호별 계약 이력 배열
  */
@@ -107,43 +110,44 @@ export function groupContractsByPolicyNumber(arReports: AnnualReport[]): Contrac
 
     for (const contract of ar.contracts) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const contractData = contract as any;
-      const policyNumber = contractData['증권번호'] || contractData.contract_number;
+      const c = contract as any;
+      const policyNumber: string = c.contract_number || c['증권번호'] || '';
       if (!policyNumber) continue;
 
-      // 스냅샷 생성 (모든 계약 정보 포함)
+      const insurerName: string = c.insurance_company || c['보험사'] || '';
+      const productName: string = c.product_name || c['보험상품'] || '';
+      const holder: string = c.contractor_name || c['계약자'] || '';
+      const insured: string = c.insured_name || c['피보험자'] || '';
+      const contractDate: string = c.contract_date || c['계약일'] || '';
+
       const snapshot: ContractSnapshot = {
         arReportId: ar.report_id,
         issueDate: ar.issue_date || '',
         parsedAt: ar.parsed_at || '',
-        // 계약 기본 정보
-        insurerName: contractData['보험사'] || contractData.insurance_company || '',
-        productName: contractData['보험상품'] || contractData.product_name || '',
-        holder: contractData['계약자'] || contractData.contractor_name || '',
-        insured: contractData['피보험자'] || contractData.insured_name || '',
-        contractDate: contractData['계약일'] || contractData.contract_date || '',
-        // 변경 추적 대상 필드
-        status: contractData['계약상태'] || contractData.status || '',
-        premium: contractData['보험료(원)'] || contractData.monthly_premium || 0,
-        coverageAmount: contractData['가입금액(만원)'] || contractData.coverage_amount || 0,
-        insurancePeriod: contractData['보험기간'] || contractData.insurance_period || '',
-        paymentPeriod: contractData['납입기간'] || contractData.premium_payment_period || '',
+        insurerName,
+        productName,
+        holder,
+        insured,
+        contractDate,
+        status: c.status || c['계약상태'] || '',
+        premium: c.monthly_premium || c['보험료(원)'] || 0,
+        coverageAmount: c.coverage_amount || c['가입금액(만원)'] || 0,
+        insurancePeriod: c.insurance_period || c['보험기간'] || '',
+        paymentPeriod: c.premium_payment_period || c['납입기간'] || '',
       };
 
       if (historyMap.has(policyNumber)) {
-        // 기존 이력에 스냅샷 추가
         historyMap.get(policyNumber)!.snapshots.push(snapshot);
       } else {
-        // 새 이력 생성
         historyMap.set(policyNumber, {
           policyNumber,
-          insurerName: contractData['보험사'] || contractData.insurance_company || '',
-          productName: contractData['보험상품'] || contractData.product_name || '',
-          holder: contractData['계약자'] || contractData.contractor_name || '',
-          insured: contractData['피보험자'] || contractData.insured_name || '',
-          contractDate: contractData['계약일'] || contractData.contract_date || '',
+          insurerName,
+          productName,
+          holder,
+          insured,
+          contractDate,
           snapshots: [snapshot],
-          latestSnapshot: snapshot,  // 임시
+          latestSnapshot: snapshot,
         });
       }
     }

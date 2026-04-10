@@ -56,9 +56,9 @@ def base_metadata() -> dict:
 @pytest.fixture
 def base_report_data() -> dict:
     return {
-        "보유계약 현황": [],
-        "부활가능 실효계약": [],
-        "총_월보험료": 0,
+        "contracts": [],
+        "lapsed_contracts": [],
+        "total_monthly_premium": 0,
     }
 
 

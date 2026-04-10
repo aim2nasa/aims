@@ -632,7 +632,7 @@ export async function handleSearchCustomerWithContracts(args: unknown) {
         // 정상 계약 수집
         const contracts: ARContract[] = ar.contracts || [];
         for (const contract of contracts) {
-          const policyNumber = contract['증권번호'] || '';
+          const policyNumber = (contract as any).contract_number || contract['증권번호'] || '';
           if (policyNumber && contractMap.has(policyNumber)) continue;
           const normalized = normalizeContract(
             contract, customerId, customerName,
@@ -649,7 +649,7 @@ export async function handleSearchCustomerWithContracts(args: unknown) {
         if (params.includeLapsed) {
           const lapsedContracts: ARContract[] = ar.lapsed_contracts || [];
           for (const contract of lapsedContracts) {
-            const policyNumber = contract['증권번호'] || '';
+            const policyNumber = (contract as any).contract_number || contract['증권번호'] || '';
             if (policyNumber && contractMap.has(policyNumber)) continue;
             const normalized = normalizeContract(
               contract, customerId, customerName,

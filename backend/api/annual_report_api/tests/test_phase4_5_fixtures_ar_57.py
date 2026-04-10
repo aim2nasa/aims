@@ -144,8 +144,8 @@ class TestUpstageCacheHitCountsWithSyntheticPdf:
 
         assert mock_post.call_count == 1, "첫 호출은 반드시 API 1회 호출"
         assert "error" not in result
-        assert len(result["보유계약 현황"]) == 1
-        assert result["총_월보험료"] == 150_000
+        assert len(result["contracts"]) == 1
+        assert result["total_monthly_premium"] == 150_000
 
     def test_second_call_uses_cache(self, tmp_path, monkeypatch):
         """같은 PDF로 두 번째 호출 시 캐시가 재사용되어 API 0회."""
@@ -175,7 +175,7 @@ class TestUpstageCacheHitCountsWithSyntheticPdf:
 
         assert mock_post_2.call_count == 0, "두 번째 호출은 캐시 히트 → API 0회"
         assert "error" not in result
-        assert len(result["보유계약 현황"]) == 1
+        assert len(result["contracts"]) == 1
 
 
 # ═════════════════════════════════════════════════════════════
@@ -187,7 +187,7 @@ class TestParserPipelineEndToEndSynthetic:
     def test_pipeline_text_pdf_via_pdfplumber(self, tmp_path):
         """
         5) 텍스트 합성 PDF → factory가 pdfplumber 계열 파서 선택 →
-           결과 JSON이 표준 키("총_월보험료", "보유계약 현황", "부활가능 실효계약") 보유.
+           결과 JSON이 표준 키("total_monthly_premium", "contracts", "lapsed_contracts") 보유.
         """
         from services import parser_factory
 
@@ -204,11 +204,11 @@ class TestParserPipelineEndToEndSynthetic:
 
         assert isinstance(result, dict)
         # 본질: 파서 인터페이스가 지키는 표준 키 존재
-        assert "총_월보험료" in result
-        assert "보유계약 현황" in result
-        assert "부활가능 실효계약" in result
-        assert isinstance(result["보유계약 현황"], list)
-        assert isinstance(result["부활가능 실효계약"], list)
+        assert "total_monthly_premium" in result
+        assert "contracts" in result
+        assert "lapsed_contracts" in result
+        assert isinstance(result["contracts"], list)
+        assert isinstance(result["lapsed_contracts"], list)
 
     def test_pipeline_image_pdf_via_upstage_mock(self, tmp_path, monkeypatch):
         """
@@ -259,8 +259,8 @@ class TestParserPipelineEndToEndSynthetic:
 
         assert mock_post.call_count == 1, "이미지 PDF는 Upstage를 통해 파싱되어야 함"
         assert "error" not in result
-        assert result["총_월보험료"] == 180_000
-        assert len(result["보유계약 현황"]) == 2
+        assert result["total_monthly_premium"] == 180_000
+        assert len(result["contracts"]) == 2
 
 
 # ═════════════════════════════════════════════════════════════
@@ -307,7 +307,7 @@ class TestRealUpstageAndParserFactory:
 
         검증 항목:
         - error 키 없음
-        - 보유계약 현황 리스트 길이 ≥ 1
+        - contracts 리스트 길이 ≥ 1
         - 결과 응답 캐시 파일 생성
         - 로그 출력 (증권번호 마스킹)
         """
@@ -319,7 +319,7 @@ class TestRealUpstageAndParserFactory:
         result = parse_annual_report(str(IMAGE_AR_FIXTURE_1))
 
         assert "error" not in result, f"Upstage 파싱 실패: {result.get('error')}"
-        contracts = result.get("보유계약 현황", [])
+        contracts = result.get("contracts", [])
         assert isinstance(contracts, list)
         assert len(contracts) >= 1, (
             f"실제 이미지 AR에서 계약이 1건 이상 추출되어야 함 (got={len(contracts)})"
@@ -331,8 +331,8 @@ class TestRealUpstageAndParserFactory:
 
         # 증거 로그 — 증권번호는 마스킹
         first = contracts[0]
-        policy = _mask(str(first.get("증권번호", "")))
-        total = result.get("총_월보험료")
+        policy = _mask(str(first.get("contract_number", "")))
+        total = result.get("total_monthly_premium")
         # ASCII 전용 메시지 (Windows cp949 콘솔 호환 — 한글/em-dash 금지)
         print(
             f"\n[Integration evidence] image_ar_sample_1.pdf: "
@@ -370,8 +370,8 @@ class TestRealUpstageAndParserFactory:
             "텍스트 AR은 pdfplumber로 처리되어야 하며 Upstage를 절대 호출하지 않음"
         )
         assert isinstance(result, dict)
-        assert "총_월보험료" in result
-        assert "보유계약 현황" in result
+        assert "total_monthly_premium" in result
+        assert "contracts" in result
 
     def test_real_upstage_cache_reuse(self):
         """
@@ -399,7 +399,7 @@ class TestRealUpstageAndParserFactory:
             )
 
         assert "error" not in result_2
-        assert len(result_2["보유계약 현황"]) == len(result_1["보유계약 현황"])
+        assert len(result_2["contracts"]) == len(result_1["contracts"])
 
         # 캐시 내용이 유효 JSON이고 format_version 을 포함하는지 확인
         with open(cache_file, "r", encoding="utf-8") as f:
@@ -410,6 +410,6 @@ class TestRealUpstageAndParserFactory:
 
         print(
             f"\n[Integration evidence] cache_reuse OK: "
-            f"contracts={len(result_2['보유계약 현황'])}, "
+            f"contracts={len(result_2['contracts'])}, "
             f"cache_file={cache_file.name}"
         )

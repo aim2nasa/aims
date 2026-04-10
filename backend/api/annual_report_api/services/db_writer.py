@@ -114,13 +114,13 @@ def save_annual_report(
                 "message": f"파싱 실패: {report_data['error']}"
             }
 
-        # 4. Annual Report 문서 생성
-        contracts = report_data.get("보유계약 현황", [])
-        lapsed_contracts = report_data.get("부활가능 실효계약", [])
+        # 4. Annual Report 문서 생성 (이슈 #58: 영문 키 통일)
+        contracts = report_data.get("contracts", [])
+        lapsed_contracts = report_data.get("lapsed_contracts", [])
 
         # 요약 정보 - PDF에서 읽은 값 그대로 사용 (계산 금지!)
-        # pdfplumber 파서는 총_월보험료를 None으로 반환할 수 있음
-        total_monthly_premium = report_data.get("총_월보험료") or 0
+        # pdfplumber 파서는 total_monthly_premium을 None으로 반환할 수 있음
+        total_monthly_premium = report_data.get("total_monthly_premium") or 0
         total_contracts = len(contracts)
 
         # 1페이지 메타데이터 처리 (명세: AI 불사용, 토큰 절약)
