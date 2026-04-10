@@ -4,10 +4,18 @@
  * Apple Progressive Disclosure: 처리 중인 문서가 없으면 자동 숨김
  */
 
-import { useMemo, useEffect, useRef } from 'react'
+import { useMemo, useEffect, useRef, useState } from 'react'
 import type { DocumentStatistics, ParsingStats } from '@/types/documentStatistics'
 import { clearBatchId, getBatchId, getLastBatchSetTime, getBatchExpectedTotal } from '@/hooks/useBatchId'
 import './DocumentProcessingStatusBar.css'
+
+/** 🔴 #53: 현재 처리 중인 파일 정보 (1건) */
+export interface CurrentProcessingFile {
+  id: string
+  displayName: string
+  progressMessage: string
+  progress: number
+}
 
 interface DocumentProcessingStatusBarProps {
   /** 전체 라이브러리 통계 */
@@ -17,6 +25,15 @@ interface DocumentProcessingStatusBarProps {
   isLoading: boolean
   /** 전체 라이브러리 통계(AR/CRS) 숨김 — 업로드 완료 화면 등 배치 진행률만 필요한 경우 */
   hideLibraryStats?: boolean
+  /** 🔴 #53: 현재 처리 중인 파일 후보 목록 (processing 상태 + progressMessage 보유) */
+  processingCandidates?: CurrentProcessingFile[]
+}
+
+/** 🔴 #53: 파일명 말줄임 (30자 초과 시 앞 27자 + …) */
+function truncateFilename(name: string, maxLen: number = 30): string {
+  if (!name) return ''
+  if (name.length <= maxLen) return name
+  return name.slice(0, maxLen - 1) + '…'
 }
 
 /** 파싱 진행률 계산 (credit_pending도 "완료"로 간주) */
@@ -40,7 +57,48 @@ function fmt(n: number): string {
 /** 파싱 통계 기본값 (API 미지원 시 안전 처리) */
 const EMPTY_PARSING: ParsingStats = { total: 0, completed: 0, processing: 0, pending: 0, failed: 0 }
 
-export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoading, hideLibraryStats }: DocumentProcessingStatusBarProps) {
+export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoading, hideLibraryStats, processingCandidates }: DocumentProcessingStatusBarProps) {
+  // 🔴 #53: 현재 표시 중인 처리 파일 (2초마다 후보 중 1건 교체)
+  const [currentFile, setCurrentFile] = useState<CurrentProcessingFile | null>(null)
+  const candidatesRef = useRef<CurrentProcessingFile[]>([])
+  candidatesRef.current = processingCandidates ?? []
+
+  // 후보 변경 시 currentFile 동기화 (interval 재등록 방지를 위해 별도 effect)
+  // 부모 polling(3초)으로 processingCandidates 배열 reference가 자주 바뀌므로,
+  // 이 effect만 candidates에 의존시키고 interval은 mount 시 1회만 등록한다.
+  useEffect(() => {
+    if (!processingCandidates || processingCandidates.length === 0) {
+      setCurrentFile(null)
+      return
+    }
+    setCurrentFile((prev) => {
+      if (prev) {
+        const same = processingCandidates.find((c) => c.id === prev.id)
+        if (same) return same
+      }
+      return processingCandidates[0] ?? null
+    })
+  }, [processingCandidates])
+
+  // 2초마다 후보 순환 — mount 시 1회만 등록 (polling re-render에 영향받지 않음)
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const list = candidatesRef.current
+      if (!list || list.length === 0) {
+        return
+      }
+      setCurrentFile((prev) => {
+        if (!prev) return list[0] ?? null
+        const idx = list.findIndex((c) => c.id === prev.id)
+        // 현재 파일이 후보에서 사라졌거나 마지막이면 맨 앞으로
+        const next = (idx < 0 || idx >= list.length - 1) ? 0 : idx + 1
+        return list[next] ?? null
+      })
+    }, 2000)
+
+    return () => clearInterval(intervalId)
+  }, [])
+
   // AR/CRS 파싱 통계 (전체 라이브러리)
   const arParsing = statistics?.arParsing ?? EMPTY_PARSING
   const crsParsing = statistics?.crsParsing ?? EMPTY_PARSING
@@ -148,8 +206,12 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
   const hasAr = !hideLibraryStats && arParsing.total > 0
   const hasCrs = !hideLibraryStats && crsParsing.total > 0
 
+  // 🔴 #53: 현재 처리 파일 표시 여부 (progressMessage 있는 경우만)
+  const showCurrentFile = Boolean(currentFile && currentFile.progressMessage && currentFile.progressMessage.trim().length > 0)
+
   return (
-    <div className={`processing-status-bar ${isVisible ? 'processing-status-bar--visible' : ''}`}>
+    <div className={`processing-status-bar ${isVisible ? 'processing-status-bar--visible' : ''} ${showCurrentFile ? 'processing-status-bar--with-current-file' : ''}`}>
+     <div className="psb-main-row">
       {/* 좌측: 현재 업로드 진행률 */}
       {hasBatch && (
         <div className="psb-batch">
@@ -269,6 +331,20 @@ export function DocumentProcessingStatusBar({ statistics, batchStatistics, isLoa
           </>
         )
       })()}
+     </div>
+
+      {/* 🔴 #53: 현재 처리 중인 파일 1건 표시 (2초마다 교체) */}
+      {showCurrentFile && currentFile && (
+        <div className="psb-current-file" key={currentFile.id} aria-live="polite">
+          <span className="psb-current-file-spinner" aria-hidden="true">⟳</span>
+          <span className="psb-current-file-name" title={currentFile.displayName}>
+            {truncateFilename(currentFile.displayName)}
+          </span>
+          <span className="psb-current-file-sep">—</span>
+          <span className="psb-current-file-message">{currentFile.progressMessage}</span>
+          <span className="psb-current-file-progress">({currentFile.progress}%)</span>
+        </div>
+      )}
     </div>
   )
 }

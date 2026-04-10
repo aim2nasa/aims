@@ -38,7 +38,7 @@ vi.mock('@/hooks/useBatchId', () => ({
 vi.mock('../DocumentProcessingStatusBar.css', () => ({}))
 
 // 모듈 import (mock 설정 후)
-import { DocumentProcessingStatusBar } from '../DocumentProcessingStatusBar'
+import { DocumentProcessingStatusBar, type CurrentProcessingFile } from '../DocumentProcessingStatusBar'
 import { clearBatchId } from '@/hooks/useBatchId'
 
 // --- 헬퍼 ---
@@ -584,6 +584,191 @@ describe('DocumentProcessingStatusBar — batch cleanup 3-guard', () => {
 
       act(() => { vi.advanceTimersByTime(2000) })
       expect(clearBatchId).toHaveBeenCalledTimes(1) // ✅ 기존 동작 유지
+    })
+  })
+
+  describe('🔴 #53: 현재 처리 중인 파일 1건 표시', () => {
+    function makeCandidate(overrides: Partial<CurrentProcessingFile> = {}): CurrentProcessingFile {
+      return {
+        id: 'doc-1',
+        displayName: '테스트파일.pdf',
+        progressMessage: 'OCR 처리 중',
+        progress: 50,
+        ...overrides,
+      }
+    }
+
+    it('processing 파일이 여러 개여도 1개만 표시된다', () => {
+      mockBatchId = 'batch-53'
+      mockLastSetTime = Date.now() - 5000
+
+      const batchStats = makeBatchStats({
+        total: 10, completed: 3, processing: 7, pending: 0, credit_pending: 0,
+      })
+
+      const candidates: CurrentProcessingFile[] = [
+        makeCandidate({ id: 'a', displayName: 'alpha.pdf', progress: 90 }),
+        makeCandidate({ id: 'b', displayName: 'beta.pdf', progress: 70 }),
+        makeCandidate({ id: 'c', displayName: 'gamma.pdf', progress: 30 }),
+      ]
+
+      const { container } = render(createElement(DocumentProcessingStatusBar, {
+        statistics: makeStats(),
+        batchStatistics: batchStats,
+        isLoading: false,
+        processingCandidates: candidates,
+      }))
+
+      const currentFileEls = container.querySelectorAll('.psb-current-file')
+      expect(currentFileEls.length).toBe(1)
+
+      const nameEl = container.querySelector('.psb-current-file-name')
+      expect(nameEl).not.toBeNull()
+      // 첫 번째 후보(alpha.pdf)가 표시됨
+      expect(nameEl?.textContent).toBe('alpha.pdf')
+    })
+
+    it('30자 초과 파일명은 말줄임(…)된다', () => {
+      mockBatchId = 'batch-long'
+      mockLastSetTime = Date.now() - 5000
+
+      const batchStats = makeBatchStats({
+        total: 2, completed: 0, processing: 2, pending: 0, credit_pending: 0,
+      })
+
+      const longName = '매우매우매우매우매우매우매우매우매우긴파일이름입니다_길다.pdf' // 33+ chars
+      const candidates: CurrentProcessingFile[] = [
+        makeCandidate({ id: 'long', displayName: longName, progress: 40 }),
+      ]
+
+      const { container } = render(createElement(DocumentProcessingStatusBar, {
+        statistics: makeStats(),
+        batchStatistics: batchStats,
+        isLoading: false,
+        processingCandidates: candidates,
+      }))
+
+      const nameEl = container.querySelector('.psb-current-file-name')
+      expect(nameEl).not.toBeNull()
+      const text = nameEl?.textContent ?? ''
+      expect(text.length).toBeLessThanOrEqual(30)
+      expect(text.endsWith('…')).toBe(true)
+      // title 속성에는 원본 전체 파일명 유지
+      expect(nameEl?.getAttribute('title')).toBe(longName)
+    })
+
+    it('processingCandidates가 빈 배열이면 현재 파일 줄이 표시되지 않는다', () => {
+      mockBatchId = 'batch-empty'
+      mockLastSetTime = Date.now() - 5000
+
+      const batchStats = makeBatchStats({
+        total: 5, completed: 2, processing: 3, pending: 0, credit_pending: 0,
+      })
+
+      const { container } = render(createElement(DocumentProcessingStatusBar, {
+        statistics: makeStats(),
+        batchStatistics: batchStats,
+        isLoading: false,
+        processingCandidates: [],
+      }))
+
+      expect(container.querySelector('.psb-current-file')).toBeNull()
+    })
+
+    it('processingCandidates 미전달 시에도 graceful fallback (줄 표시 안 함)', () => {
+      mockBatchId = 'batch-undef'
+      mockLastSetTime = Date.now() - 5000
+
+      const batchStats = makeBatchStats({
+        total: 5, completed: 2, processing: 3, pending: 0, credit_pending: 0,
+      })
+
+      const { container } = render(createElement(DocumentProcessingStatusBar, {
+        statistics: makeStats(),
+        batchStatistics: batchStats,
+        isLoading: false,
+      }))
+
+      expect(container.querySelector('.psb-current-file')).toBeNull()
+    })
+
+    it('processing이 0이면 StatusBar 전체가 숨겨져 현재 파일 줄도 보이지 않음 (기존 동작 유지)', () => {
+      mockBatchId = null
+
+      const candidates: CurrentProcessingFile[] = [
+        makeCandidate({ id: 'stale', displayName: 'stale.pdf', progress: 50 }),
+      ]
+
+      const { container } = render(createElement(DocumentProcessingStatusBar, {
+        statistics: makeStats({ total: 10, completed: 10, processing: 0 }),
+        batchStatistics: null,
+        isLoading: false,
+        processingCandidates: candidates,
+      }))
+
+      // 전체 StatusBar 숨김 → 현재 파일 줄도 없음
+      expect(container.querySelector('.psb-current-file')).toBeNull()
+    })
+
+    it('2초 경과 시 다음 후보로 교체된다', () => {
+      mockBatchId = 'batch-rotate'
+      mockLastSetTime = Date.now() - 5000
+
+      const batchStats = makeBatchStats({
+        total: 10, completed: 3, processing: 7, pending: 0, credit_pending: 0,
+      })
+
+      const candidates: CurrentProcessingFile[] = [
+        makeCandidate({ id: 'a', displayName: 'alpha.pdf', progress: 90 }),
+        makeCandidate({ id: 'b', displayName: 'beta.pdf', progress: 70 }),
+      ]
+
+      const { container } = render(createElement(DocumentProcessingStatusBar, {
+        statistics: makeStats(),
+        batchStatistics: batchStats,
+        isLoading: false,
+        processingCandidates: candidates,
+      }))
+
+      // 초기: alpha.pdf
+      expect(container.querySelector('.psb-current-file-name')?.textContent).toBe('alpha.pdf')
+
+      // 2초 경과 → beta.pdf
+      act(() => { vi.advanceTimersByTime(2000) })
+      expect(container.querySelector('.psb-current-file-name')?.textContent).toBe('beta.pdf')
+
+      // 추가 2초 → 다시 alpha.pdf (순환)
+      act(() => { vi.advanceTimersByTime(2000) })
+      expect(container.querySelector('.psb-current-file-name')?.textContent).toBe('alpha.pdf')
+    })
+
+    it('progressMessage와 progress가 형식대로 표시된다', () => {
+      mockBatchId = 'batch-format'
+      mockLastSetTime = Date.now() - 5000
+
+      const batchStats = makeBatchStats({
+        total: 1, completed: 0, processing: 1, pending: 0, credit_pending: 0,
+      })
+
+      const candidates: CurrentProcessingFile[] = [
+        makeCandidate({
+          id: 'x',
+          displayName: '주_마리치_증권-DB.pdf',
+          progressMessage: 'OCR 처리 중',
+          progress: 70,
+        }),
+      ]
+
+      const { container } = render(createElement(DocumentProcessingStatusBar, {
+        statistics: makeStats(),
+        batchStatistics: batchStats,
+        isLoading: false,
+        processingCandidates: candidates,
+      }))
+
+      expect(container.querySelector('.psb-current-file-name')?.textContent).toBe('주_마리치_증권-DB.pdf')
+      expect(container.querySelector('.psb-current-file-message')?.textContent).toBe('OCR 처리 중')
+      expect(container.querySelector('.psb-current-file-progress')?.textContent).toBe('(70%)')
     })
   })
 

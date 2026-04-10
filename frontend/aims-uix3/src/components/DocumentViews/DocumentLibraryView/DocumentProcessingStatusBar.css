@@ -10,8 +10,8 @@
 
   .processing-status-bar {
     display: flex;
-    align-items: center;
-    gap: 20px;
+    flex-direction: column;
+    gap: var(--spacing-1);
     padding: 0 var(--spacing-3);
     margin: 0 0 0 0;
     background: var(--color-bg-secondary);
@@ -29,12 +29,83 @@
       margin 0.3s ease;
   }
 
+  /* 🔴 #53: 기존 메인 행 (배치/파이프라인/라이브러리) */
+  .psb-main-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    min-width: 0;
+  }
+
   .processing-status-bar--visible {
     max-height: 72px;
     overflow: visible;
     opacity: 1;
     padding: var(--spacing-2) var(--spacing-3);
     margin: 0 0 var(--spacing-2) 0;
+  }
+
+  /* 🔴 #53: 현재 처리 파일이 추가되면 높이 확장 */
+  .processing-status-bar--with-current-file.processing-status-bar--visible {
+    max-height: 100px;
+  }
+
+  /* 🔴 #53: 현재 처리 중인 파일 1건 표시 */
+  .psb-current-file {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--color-ios-text-tertiary);
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    animation: psb-current-file-fade 0.2s ease;
+  }
+
+  @keyframes psb-current-file-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .psb-current-file-spinner {
+    color: var(--color-primary-500);
+    font-weight: 600;
+    animation: psb-spinner-rotate 1.5s linear infinite;
+    display: inline-block;
+  }
+
+  @keyframes psb-spinner-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .psb-current-file-name {
+    color: var(--color-ios-text-secondary);
+    font-weight: 600;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .psb-current-file-sep {
+    color: var(--color-ios-text-tertiary);
+    opacity: 0.6;
+  }
+
+  .psb-current-file-message {
+    color: var(--color-ios-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .psb-current-file-progress {
+    color: var(--color-primary-500);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
   }
 
   /* === Skeleton Loading === */
@@ -340,6 +411,15 @@
     /* AR/CRS 파싱 상세: 모바일에서 숨김 (파이프라인만 표시) */
     .psb-parsing {
       display: none;
+    }
+
+    /* 🔴 #53: 모바일에서는 파일명 폭 축소 */
+    .psb-current-file-name {
+      max-width: 140px;
+    }
+
+    .processing-status-bar--with-current-file.processing-status-bar--visible {
+      max-height: 72px;
     }
   }
 

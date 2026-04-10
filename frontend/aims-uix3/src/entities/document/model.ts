@@ -41,6 +41,9 @@ export const DocumentSchema = z.object({
   // 상태 정보
   status: z.enum(['active', 'archived', 'deleted']).default('active'),
 
+  // 🔴 #53: 현재 처리 단계 설명 (예: "OCR 처리 중")
+  progressMessage: z.string().nullish(),
+
   // 메타데이터
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
