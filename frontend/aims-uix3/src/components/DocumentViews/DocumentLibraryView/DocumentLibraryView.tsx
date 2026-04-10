@@ -31,7 +31,7 @@ import { DocumentStatusService } from '../../../services/DocumentStatusService'
 import type { Document } from '@/types/documentStatus'
 import { DocumentService } from '@/services/DocumentService'
 import DownloadHelper from '../../../utils/downloadHelper'
-import { DocumentProcessingStatusBar } from './DocumentProcessingStatusBar'
+import { DocumentProcessingStatusBar, type CurrentProcessingFile } from './DocumentProcessingStatusBar'
 import { useDocumentStatistics } from '@/hooks/useDocumentStatistics'
 import { useBatchId } from '@/hooks/useBatchId'
 import './DocumentLibraryView.header.css';
@@ -215,6 +215,40 @@ const DocumentLibraryContent: React.FC<{
       }
     }
   }, [customerFilter, state.documents, onCustomerFilterChange])
+
+  // 🔴 #53: 현재 처리 중인 파일 후보 — progressMessage 보유 + processing 상태
+  // 정렬 기준: progress DESC → _id DESC (가장 최근 진행한 파일 우선)
+  const processingCandidates = React.useMemo<CurrentProcessingFile[]>(() => {
+    const docs = state.documents || []
+    const candidates: CurrentProcessingFile[] = []
+    for (const doc of docs) {
+      const status = doc.overallStatus || doc.status
+      if (status !== 'processing') continue
+      const msg = doc.progressMessage
+      if (!msg || typeof msg !== 'string' || msg.trim().length === 0) continue
+      if (msg.trim() === '처리 중') continue // 의미 없는 기본값은 제외
+      const id = doc._id || doc.id
+      if (!id) continue
+      const displayName =
+        doc.displayName ||
+        doc.originalName ||
+        DocumentStatusService.extractFilename(doc) ||
+        '이름 없음'
+      const progress = typeof doc.progress === 'number' ? doc.progress : 0
+      candidates.push({
+        id: String(id),
+        displayName,
+        progressMessage: msg,
+        progress: Math.max(0, Math.min(100, Math.round(progress))),
+      })
+    }
+    // 정렬: progress DESC → id DESC
+    candidates.sort((a, b) => {
+      if (b.progress !== a.progress) return b.progress - a.progress
+      return b.id.localeCompare(a.id)
+    })
+    return candidates
+  }, [state.documents])
 
   // 별칭 없는 문서 존재 여부 및 수 (Progressive Disclosure + 카운트 문구용)
   const hasDocWithoutAlias = React.useMemo(() =>
@@ -959,6 +993,7 @@ const DocumentLibraryContent: React.FC<{
         statistics={docStats}
         batchStatistics={currentBatchId ? batchStats : null}
         isLoading={statsLoading || batchLoading}
+        processingCandidates={processingCandidates}
       />
 
       {/* 초성 필터 바 */}

@@ -172,6 +172,7 @@ export interface Document {
   overallStatus?: DocumentStatus
   progressStage?: string  // 🔴 credit_pending 등 처리 단계 상태
   progress?: number
+  progressMessage?: string | null  // 🔴 #53: 현재 처리 단계 설명 (예: "OCR 처리 중")
 
   // 타임스탬프
   uploaded_at?: string
