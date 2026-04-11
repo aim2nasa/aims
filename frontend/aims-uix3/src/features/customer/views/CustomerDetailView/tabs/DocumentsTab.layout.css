@@ -416,38 +416,27 @@
     min-width: 108px;
   }
 
+  /* 🍎 문서 분류함 버튼 — 아이콘-only 정사각 (일반 컨텍스트)
+   * CFD는 nav-group에서 자체 렌더 (CustomerFullDetailView.layout.css 참조) */
   .document-expand-btn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: var(--spacing-1);
-    padding: 0 10px 0 var(--spacing-2);
-    height: 24px;
-    border: none;
-    border-radius: 6px;
-    background: var(--color-primary-500);
-    color: #fff;
-    cursor: pointer;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
     flex-shrink: 0;
-    transition: all 0.15s ease-out;
-    font-size: var(--font-size-caption-2);
-    font-weight: 600;
-    line-height: 1;
-    white-space: nowrap;
-  }
-
-  .document-expand-btn__icon {
-    font-size: var(--font-size-caption-1);
-    line-height: 1;
-  }
-
-  .document-expand-btn__label {
-    font-size: inherit;
-    font-weight: inherit;
-    color: inherit;
+    color: var(--color-text-secondary);
   }
 
   .document-expand-btn:hover {
-    opacity: 0.85;
+    color: var(--color-text-primary);
+  }
+
+  .document-expand-btn svg {
+    width: 16px;
+    height: 16px;
+    display: block;
   }
 
   /* 호버 시 이름변경/삭제 아이콘 */

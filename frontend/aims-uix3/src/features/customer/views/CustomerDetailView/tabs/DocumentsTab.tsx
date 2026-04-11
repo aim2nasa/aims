@@ -1181,52 +1181,67 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
         </div>
       </div>
 
-      {/* 카테고리 필터 + 확대 버튼 */}
+      {/* 카테고리 필터 트리 + (일반 컨텍스트 한정) 문서 분류함 버튼
+       *
+       * 🍎 포탈 계약 (2026-04-11 변경):
+       * - filterBarPortalTarget 제공 시 (CFD): 포탈에는 **분류 트리만** 렌더링.
+       *   문서 분류함 버튼은 CFD가 자체 nav-group에 렌더 (onExpandToExplorer 콜백 활용).
+       * - filterBarPortalTarget 미제공 시 (일반 CustomerDetailView): 같은 filter-bar
+       *   안에 좌측 트리 + 우측 아이콘-only 분류함 버튼 (space-between).
+       */}
       {(() => {
         const showFilter = !isEmpty && documents.length > 0
         const showExpand = !!onExpandToExplorer
         if (!showFilter && !showExpand) return null
 
-        const filterBarContent = (
-          <>
-            {showFilter && (
-              <DocumentCategoryFilter
-                documents={documents}
-                selectedCategory={selectedCategory}
-                selectedSubType={selectedSubType}
-                onCategoryChange={(cat) => {
-                  setSelectedCategory(cat)
-                  setSelectedSubType(null)
-                  setCurrentPage(1)
-                }}
-                onSubTypeChange={(sub) => {
-                  setSelectedSubType(sub)
-                  setCurrentPage(1)
-                }}
-              />
-            )}
-            {showExpand && (
-              <button
-                type="button"
-                className="document-expand-btn"
-                onClick={onExpandToExplorer}
-                aria-label="문서 분류함 보기"
-              >
-                <span className="document-expand-btn__icon">📂</span>
-                <span className="document-expand-btn__label">문서 분류함</span>
-              </button>
-            )}
-          </>
-        )
+        const filterTree = showFilter ? (
+          <DocumentCategoryFilter
+            documents={documents}
+            selectedCategory={selectedCategory}
+            selectedSubType={selectedSubType}
+            onCategoryChange={(cat) => {
+              setSelectedCategory(cat)
+              setSelectedSubType(null)
+              setCurrentPage(1)
+            }}
+            onSubTypeChange={(sub) => {
+              setSelectedSubType(sub)
+              setCurrentPage(1)
+            }}
+          />
+        ) : null
 
-        // 포탈 타겟이 있으면 섹션 헤더에 렌더링, 없으면 인라인 렌더링
+        // 포탈 타겟이 있으면 CFD — 포탈에는 트리만, 분류함 버튼은 부모가 렌더
         if (filterBarPortalTarget) {
-          return createPortal(filterBarContent, filterBarPortalTarget)
+          if (!filterTree) return null
+          return createPortal(filterTree, filterBarPortalTarget)
         }
 
+        // 일반 컨텍스트 — 트리 + 아이콘-only 분류함 버튼
         return (
           <div className="document-category-filter-bar">
-            {filterBarContent}
+            {filterTree}
+            {showExpand && (
+              <Tooltip content="문서 분류함 열기">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="document-expand-btn"
+                  onClick={onExpandToExplorer}
+                  aria-label="문서 분류함 열기"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d="M1.75 3A1.75 1.75 0 000 4.75v6.5C0 12.216.784 13 1.75 13h12.5A1.75 1.75 0 0016 11.25V5.75A1.75 1.75 0 0014.25 4H8.378a.25.25 0 01-.2-.1L7.1 2.45A1.75 1.75 0 005.7 1.75H1.75z" />
+                  </svg>
+                </Button>
+              </Tooltip>
+            )}
           </div>
         )
       })()}
