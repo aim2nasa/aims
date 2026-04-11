@@ -1,266 +1,89 @@
 /**
  * MappingPreview 컴포넌트 테스트
  * @since 2025-12-05
+ * @version 4.0.0 (2026-04-11 재설계 — 3상태 / 공존 금지 가드 / 해제 즉시성)
  */
 
-import { describe, test, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, test, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent, within } from '@testing-library/react'
 import MappingPreview from '../components/MappingPreview'
 import type { FolderMapping } from '../types'
 import type { CustomerForMatching } from '../utils/customerMatcher'
 
-/**
- * 테스트용 매핑 데이터 생성
- */
-function createMockMapping(overrides: Partial<FolderMapping> = {}): FolderMapping {
+/** 3상태 매핑 생성 헬퍼 */
+function mkMapping(overrides: Partial<FolderMapping> = {}): FolderMapping {
   return {
+    folderPath: '홍길동',
     folderName: '홍길동',
-    customerId: 'c1',
-    customerName: '홍길동',
-    matched: true,
-    files: [],
-    fileCount: 5,
-    totalSize: 1024 * 1024, // 1MB
+    parentFolderPath: null,
+    state: 'unmapped',
+    customerId: null,
+    customerName: null,
+    inheritedFromPath: null,
+    directFiles: [],
+    directFileCount: 0,
+    directTotalSize: 0,
+    subtreeFiles: [],
+    subtreeFileCount: 5,
+    subtreeTotalSize: 1024 * 1024,
     ...overrides,
   }
 }
 
-describe('MappingPreview', () => {
+const mockCustomers: CustomerForMatching[] = [
+  { _id: 'c1', personal_info: { name: '김태호' }, insurance_info: { customer_type: '개인' } },
+  { _id: 'c2', personal_info: { name: '홍길동' }, insurance_info: { customer_type: '개인' } },
+  { _id: 'c3', personal_info: { name: '한울테크' }, insurance_info: { customer_type: '법인' } },
+]
+
+describe('MappingPreview v4 — 3상태 렌더', () => {
   const mockOnBack = vi.fn()
   const mockOnStartUpload = vi.fn()
+  const mockOnMappingChange = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  describe('요약 통계', () => {
-    test('매칭/미매칭 수가 표시된다', () => {
-      const mappings: FolderMapping[] = [
-        createMockMapping({ folderName: '홍길동', matched: true }),
-        createMockMapping({ folderName: '김철수', matched: true }),
-        createMockMapping({ folderName: '미매칭', matched: false, customerId: null, customerName: null }),
+  describe('상단 요약', () => {
+    test('드롭 직후(모두 unmapped)에는 업로드 대상 0개로 표시된다', () => {
+      const mappings = [
+        mkMapping({ folderPath: 'A', folderName: 'A', state: 'unmapped' }),
+        mkMapping({ folderPath: 'B', folderName: 'B', state: 'unmapped' }),
       ]
+      render(<MappingPreview mappings={mappings} onBack={mockOnBack} onStartUpload={mockOnStartUpload} />)
 
-      render(
-        <MappingPreview
-          mappings={mappings}
-          onBack={mockOnBack}
-          onStartUpload={mockOnStartUpload}
-        />
-      )
-
-      // 선택됨: 2/2 (선택된 수/전체 매칭 수)
-      expect(screen.getByText('2/2')).toBeInTheDocument()
-      // 미매칭 1개
-      expect(screen.getByText('1')).toBeInTheDocument()
+      expect(screen.getByText(/업로드 대상:/)).toBeInTheDocument()
+      expect(screen.getByText(/0개 폴더/)).toBeInTheDocument()
+      expect(screen.getByText(/미매핑 2개는 업로드되지 않습니다/)).toBeInTheDocument()
     })
 
-    test('총 파일 수가 표시된다', () => {
-      const mappings: FolderMapping[] = [
-        createMockMapping({ folderName: '홍길동', fileCount: 5 }),
-        createMockMapping({ folderName: '김철수', fileCount: 10 }),
+    test('direct 1개 + unmapped 1개 → 업로드 대상 1개', () => {
+      const mappings = [
+        mkMapping({ folderPath: 'A', folderName: 'A', state: 'direct', customerId: 'c1', customerName: '김태호' }),
+        mkMapping({ folderPath: 'B', folderName: 'B', state: 'unmapped' }),
       ]
+      render(<MappingPreview mappings={mappings} customers={mockCustomers} onBack={mockOnBack} onStartUpload={mockOnStartUpload} />)
 
-      render(
-        <MappingPreview
-          mappings={mappings}
-          onBack={mockOnBack}
-          onStartUpload={mockOnStartUpload}
-        />
-      )
-
-      expect(screen.getByText('15')).toBeInTheDocument()
-    })
-
-    test('총 크기가 포맷되어 표시된다', () => {
-      const mappings: FolderMapping[] = [
-        createMockMapping({ folderName: '홍길동', totalSize: 1024 * 1024 }), // 1MB
-        createMockMapping({ folderName: '김철수', totalSize: 2 * 1024 * 1024 }), // 2MB
-      ]
-
-      render(
-        <MappingPreview
-          mappings={mappings}
-          onBack={mockOnBack}
-          onStartUpload={mockOnStartUpload}
-        />
-      )
-
-      expect(screen.getByText('3.0 MB')).toBeInTheDocument()
+      // 상단 요약의 <strong>1개 폴더</strong> 정확 매칭
+      const summary = screen.getByText((_, el) => el?.className === 'preview-summary')
+      expect(summary).toHaveTextContent(/1개 폴더/)
+      expect(summary).toHaveTextContent(/1명 고객/)
+      expect(screen.getByText(/미매핑 1개는 업로드되지 않습니다/)).toBeInTheDocument()
     })
   })
 
-  describe('매핑 목록', () => {
-    test('트리 헤더가 표시된다', () => {
-      render(
-        <MappingPreview
-          mappings={[createMockMapping()]}
-          onBack={mockOnBack}
-          onStartUpload={mockOnStartUpload}
-        />
-      )
-
-      expect(screen.getByText('폴더 구조')).toBeInTheDocument()
-      expect(screen.getByText('전체 해제')).toBeInTheDocument() // 기본적으로 모든 매칭 폴더 선택됨
-      expect(screen.getByText(/모두 접기|모두 펼치기/)).toBeInTheDocument()
-    })
-
-    test('매칭된 폴더가 표시된다', () => {
-      const mapping = createMockMapping({
-        folderName: '홍길동',
-        customerName: '홍길동',
-        matched: true,
-        fileCount: 5,
-      })
-
-      render(
-        <MappingPreview
-          mappings={[mapping]}
-          onBack={mockOnBack}
-          onStartUpload={mockOnStartUpload}
-        />
-      )
-
-      // 폴더명과 고객명이 같으면 두 번 표시됨
-      const hongElements = screen.getAllByText('홍길동')
-      expect(hongElements.length).toBeGreaterThanOrEqual(1)
-      expect(screen.getByText(/5개/)).toBeInTheDocument()
-    })
-
-    test('미매칭 폴더에 "미매칭" 표시', () => {
-      const mapping = createMockMapping({
-        folderName: '미매칭폴더',
-        matched: false,
-        customerId: null,
-        customerName: null,
-      })
-
-      render(
-        <MappingPreview
-          mappings={[mapping]}
-          onBack={mockOnBack}
-          onStartUpload={mockOnStartUpload}
-        />
-      )
-
-      // "미매칭"이 legend와 폴더 note에 모두 표시됨
-      const unmatchedElements = screen.getAllByText('미매칭')
-      expect(unmatchedElements.length).toBeGreaterThanOrEqual(1)
-    })
-  })
-
-  describe('경고 메시지', () => {
-    test('미매칭 폴더가 있으면 경고가 표시된다', () => {
-      const mappings: FolderMapping[] = [
-        createMockMapping({ folderName: '홍길동', matched: true }),
-        createMockMapping({ folderName: '미매칭폴더', matched: false, customerId: null, customerName: null }),
+  describe('3상태 렌더링', () => {
+    test('direct: 고객명 + [해제] 버튼', () => {
+      const mappings = [
+        mkMapping({
+          folderPath: '한울',
+          folderName: '한울',
+          state: 'direct',
+          customerId: 'c3',
+          customerName: '한울테크',
+        }),
       ]
-
-      render(
-        <MappingPreview
-          mappings={mappings}
-          onBack={mockOnBack}
-          onStartUpload={mockOnStartUpload}
-        />
-      )
-
-      expect(screen.getByText(/미매칭된 1개 폴더는 업로드되지 않습니다/)).toBeInTheDocument()
-    })
-
-    test('모두 매칭되면 경고가 표시되지 않는다', () => {
-      const mappings: FolderMapping[] = [
-        createMockMapping({ folderName: '홍길동', matched: true }),
-        createMockMapping({ folderName: '김철수', matched: true }),
-      ]
-
-      render(
-        <MappingPreview
-          mappings={mappings}
-          onBack={mockOnBack}
-          onStartUpload={mockOnStartUpload}
-        />
-      )
-
-      expect(screen.queryByText(/미매칭된.*폴더는 업로드되지 않습니다/)).not.toBeInTheDocument()
-    })
-  })
-
-  describe('버튼 동작', () => {
-    test('뒤로 버튼 클릭 시 onBack 호출', () => {
-      render(
-        <MappingPreview
-          mappings={[createMockMapping()]}
-          onBack={mockOnBack}
-          onStartUpload={mockOnStartUpload}
-        />
-      )
-
-      fireEvent.click(screen.getByText('뒤로'))
-      expect(mockOnBack).toHaveBeenCalledTimes(1)
-    })
-
-    test('업로드 버튼 클릭 시 onStartUpload 호출', () => {
-      render(
-        <MappingPreview
-          mappings={[createMockMapping({ matched: true })]}
-          onBack={mockOnBack}
-          onStartUpload={mockOnStartUpload}
-        />
-      )
-
-      fireEvent.click(screen.getByText(/업로드 시작/))
-      expect(mockOnStartUpload).toHaveBeenCalledTimes(1)
-    })
-
-    test('매칭된 폴더가 없으면 업로드 버튼이 비활성화된다', () => {
-      render(
-        <MappingPreview
-          mappings={[createMockMapping({ folderName: '미매칭폴더', matched: false, customerId: null, customerName: null })]}
-          onBack={mockOnBack}
-          onStartUpload={mockOnStartUpload}
-        />
-      )
-
-      const uploadButton = screen.getByText('업로드할 폴더를 선택하세요')
-      expect(uploadButton.closest('button')).toBeDisabled()
-    })
-
-    test('업로드 버튼에 선택된 폴더 수가 표시된다', () => {
-      render(
-        <MappingPreview
-          mappings={[
-            createMockMapping({ folderName: '홍길동', matched: true }),
-            createMockMapping({ folderName: '김철수', matched: true }),
-            createMockMapping({ folderName: '미매칭폴더', matched: false, customerId: null, customerName: null }),
-          ]}
-          onBack={mockOnBack}
-          onStartUpload={mockOnStartUpload}
-        />
-      )
-
-      expect(screen.getByText('2개 폴더 업로드 시작')).toBeInTheDocument()
-    })
-  })
-
-  describe('수동 고객 매핑', () => {
-    const mockOnMappingChange = vi.fn()
-
-    const mockCustomers: CustomerForMatching[] = [
-      { _id: 'c1', personal_info: { name: '김태호' }, insurance_info: { customer_type: '개인' } },
-      { _id: 'c2', personal_info: { name: '홍길동' }, insurance_info: { customer_type: '개인' } },
-      { _id: 'c3', personal_info: { name: '한울테크' }, insurance_info: { customer_type: '법인' } },
-    ]
-
-    beforeEach(() => {
-      mockOnMappingChange.mockClear()
-    })
-
-    test('"고객 지정" 버튼이 미매칭 폴더에만 표시된다', () => {
-      const mappings: FolderMapping[] = [
-        createMockMapping({ folderName: '미매칭폴더', matched: false, customerId: null, customerName: null }),
-        createMockMapping({ folderName: '홍길동', matched: true }),
-      ]
-
       render(
         <MappingPreview
           mappings={mappings}
@@ -271,19 +94,51 @@ describe('MappingPreview', () => {
         />
       )
 
-      // 미매칭 폴더에 "고객 지정" 버튼이 존재
-      const assignButtons = screen.getAllByText('고객 지정')
-      expect(assignButtons).toHaveLength(1)
-
-      // 매칭된 폴더에는 "고객 지정" 버튼이 없음 (총 1개뿐)
-      expect(assignButtons.length).toBe(1)
+      expect(screen.getByText('한울테크')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: '해제' })).toBeInTheDocument()
+      // unmapped가 아니므로 [고객 지정] 버튼은 없음
+      expect(screen.queryByRole('button', { name: '고객 지정' })).not.toBeInTheDocument()
     })
 
-    test('"고객 지정" 클릭 시 검색 드롭다운이 표시된다', () => {
-      const mappings: FolderMapping[] = [
-        createMockMapping({ folderName: '미매칭폴더', matched: false, customerId: null, customerName: null }),
+    test('inherited: 고객명 표시 + [고객 지정] 버튼 없음', () => {
+      const mappings = [
+        mkMapping({
+          folderPath: '한울',
+          folderName: '한울',
+          state: 'direct',
+          customerId: 'c3',
+          customerName: '한울테크',
+        }),
+        mkMapping({
+          folderPath: '한울/하위',
+          folderName: '하위',
+          parentFolderPath: '한울',
+          state: 'inherited',
+          customerId: 'c3',
+          customerName: '한울테크',
+          inheritedFromPath: '한울',
+        }),
       ]
+      render(
+        <MappingPreview
+          mappings={mappings}
+          customers={mockCustomers}
+          onMappingChange={mockOnMappingChange}
+          onBack={mockOnBack}
+          onStartUpload={mockOnStartUpload}
+          expandedPaths={new Set(['한울'])}
+        />
+      )
 
+      // 상속 표시
+      expect(screen.getByText('(상속)')).toBeInTheDocument()
+      // direct 1개, 총 고객지정 버튼 0개, 해제 1개
+      expect(screen.queryByRole('button', { name: '고객 지정' })).not.toBeInTheDocument()
+      expect(screen.getAllByRole('button', { name: '해제' })).toHaveLength(1)
+    })
+
+    test('unmapped: [고객 지정] 버튼 표시', () => {
+      const mappings = [mkMapping({ folderPath: '미매핑', folderName: '미매핑', state: 'unmapped' })]
       render(
         <MappingPreview
           mappings={mappings}
@@ -294,15 +149,31 @@ describe('MappingPreview', () => {
         />
       )
 
-      fireEvent.click(screen.getByText('고객 지정'))
+      expect(screen.getByRole('button', { name: '고객 지정' })).toBeInTheDocument()
+    })
+  })
+
+  describe('고객 지정 드롭다운 + 추천 로직 보존', () => {
+    test('[고객 지정] 클릭 → 검색 드롭다운 표시', () => {
+      const mappings = [mkMapping({ folderPath: '미매핑', folderName: '미매핑', state: 'unmapped' })]
+      render(
+        <MappingPreview
+          mappings={mappings}
+          customers={mockCustomers}
+          onMappingChange={mockOnMappingChange}
+          onBack={mockOnBack}
+          onStartUpload={mockOnStartUpload}
+        />
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: '고객 지정' }))
       expect(screen.getByPlaceholderText('고객명 검색')).toBeInTheDocument()
     })
 
-    test('고객 선택 시 onMappingChange가 올바른 인자로 호출된다', () => {
-      const mappings: FolderMapping[] = [
-        createMockMapping({ folderName: '미매칭폴더', matched: false, customerId: null, customerName: null }),
+    test('고객 선택 시 onMappingChange(folderPath, customer) 호출', () => {
+      const mappings = [
+        mkMapping({ folderPath: '루트/미매핑', folderName: '미매핑', state: 'unmapped' }),
       ]
-
       render(
         <MappingPreview
           mappings={mappings}
@@ -313,20 +184,17 @@ describe('MappingPreview', () => {
         />
       )
 
-      // 드롭다운 열기
-      fireEvent.click(screen.getByText('고객 지정'))
-      // 고객 선택
+      fireEvent.click(screen.getByRole('button', { name: '고객 지정' }))
       fireEvent.click(screen.getByText('김태호'))
 
       expect(mockOnMappingChange).toHaveBeenCalledTimes(1)
-      expect(mockOnMappingChange).toHaveBeenCalledWith('미매칭폴더', mockCustomers[0])
+      expect(mockOnMappingChange).toHaveBeenCalledWith('루트/미매핑', mockCustomers[0])
     })
 
-    test('검색 필터링이 동작한다', () => {
-      const mappings: FolderMapping[] = [
-        createMockMapping({ folderName: '미매칭폴더', matched: false, customerId: null, customerName: null }),
+    test('폴더명이 고객명과 유사할 때 드롭다운 상단에 해당 고객이 정렬된다 (추천 로직 보존)', () => {
+      const mappings = [
+        mkMapping({ folderPath: '홍길동_2024', folderName: '홍길동_2024', state: 'unmapped' }),
       ]
-
       render(
         <MappingPreview
           mappings={mappings}
@@ -337,30 +205,105 @@ describe('MappingPreview', () => {
         />
       )
 
-      // 드롭다운 열기
-      fireEvent.click(screen.getByText('고객 지정'))
+      fireEvent.click(screen.getByRole('button', { name: '고객 지정' }))
 
-      // "김" 입력
-      const searchInput = screen.getByPlaceholderText('고객명 검색')
-      fireEvent.change(searchInput, { target: { value: '김' } })
+      const list = screen.getByPlaceholderText('고객명 검색').parentElement!
+      const items = within(list).getAllByText(/김태호|홍길동|한울테크/)
+      // 첫 번째 항목이 홍길동이어야 함 (점수 상단 정렬)
+      expect(items[0].textContent).toContain('홍길동')
+    })
 
-      // "김태호"만 표시되고 "홍길동", "한울테크"는 안 보임
+    test('검색 필터링이 동작한다', () => {
+      const mappings = [mkMapping({ folderPath: 'F', folderName: 'F', state: 'unmapped' })]
+      render(
+        <MappingPreview
+          mappings={mappings}
+          customers={mockCustomers}
+          onMappingChange={mockOnMappingChange}
+          onBack={mockOnBack}
+          onStartUpload={mockOnStartUpload}
+        />
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: '고객 지정' }))
+      fireEvent.change(screen.getByPlaceholderText('고객명 검색'), { target: { value: '김' } })
+
       expect(screen.getByText('김태호')).toBeInTheDocument()
       expect(screen.queryByText('홍길동')).not.toBeInTheDocument()
       expect(screen.queryByText('한울테크')).not.toBeInTheDocument()
     })
+  })
 
-    test('수동 매핑된 폴더에 "수동 지정" 배지가 표시된다', () => {
-      // folderName !== customerName인 matched 매핑 → 수동 매핑으로 판별
-      const mappings: FolderMapping[] = [
-        createMockMapping({
-          folderName: '미매칭폴더',
-          customerId: 'c1',
-          customerName: '김태호',
-          matched: true,
+  describe('공존 금지 가드 (R3)', () => {
+    test('자식에 direct가 있으면 부모 [고객 지정] 버튼이 비활성화된다', () => {
+      const mappings = [
+        mkMapping({ folderPath: '한울', folderName: '한울', state: 'unmapped' }),
+        mkMapping({
+          folderPath: '한울/하위A',
+          folderName: '하위A',
+          parentFolderPath: '한울',
+          state: 'direct',
+          customerId: 'c3',
+          customerName: '한울테크',
         }),
       ]
+      render(
+        <MappingPreview
+          mappings={mappings}
+          customers={mockCustomers}
+          onMappingChange={mockOnMappingChange}
+          onBack={mockOnBack}
+          onStartUpload={mockOnStartUpload}
+          expandedPaths={new Set(['한울'])}
+        />
+      )
 
+      // 부모 한울(unmapped)의 [고객 지정] 버튼이 disabled 상태
+      const assignBtn = screen.getByRole('button', { name: '고객 지정' })
+      expect(assignBtn).toBeDisabled()
+    })
+
+    test('자식에 direct가 없으면 부모 [고객 지정] 버튼은 활성화된다', () => {
+      const mappings = [
+        mkMapping({ folderPath: '한울', folderName: '한울', state: 'unmapped' }),
+        mkMapping({
+          folderPath: '한울/하위A',
+          folderName: '하위A',
+          parentFolderPath: '한울',
+          state: 'unmapped',
+        }),
+      ]
+      render(
+        <MappingPreview
+          mappings={mappings}
+          customers={mockCustomers}
+          onMappingChange={mockOnMappingChange}
+          onBack={mockOnBack}
+          onStartUpload={mockOnStartUpload}
+          expandedPaths={new Set(['한울'])}
+        />
+      )
+
+      const assignButtons = screen.getAllByRole('button', { name: '고객 지정' })
+      // 한울 + 하위A 둘 다 unmapped, 둘 다 활성화
+      expect(assignButtons).toHaveLength(2)
+      for (const btn of assignButtons) {
+        expect(btn).not.toBeDisabled()
+      }
+    })
+  })
+
+  describe('해제 즉시성 (R5)', () => {
+    test('[해제] 클릭 → onMappingChange(folderPath, null) 즉시 호출 (모달 없음)', () => {
+      const mappings = [
+        mkMapping({
+          folderPath: '한울',
+          folderName: '한울',
+          state: 'direct',
+          customerId: 'c3',
+          customerName: '한울테크',
+        }),
+      ]
       render(
         <MappingPreview
           mappings={mappings}
@@ -371,7 +314,97 @@ describe('MappingPreview', () => {
         />
       )
 
-      expect(screen.getByText('수동 지정')).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: '해제' }))
+      // 확인 모달 없이 즉시 콜백
+      expect(mockOnMappingChange).toHaveBeenCalledTimes(1)
+      expect(mockOnMappingChange).toHaveBeenCalledWith('한울', null)
+    })
+  })
+
+  describe('D3: direct 폴더 고객명 재클릭으로 변경', () => {
+    test('direct 행의 고객명 재클릭 → 드롭다운 재오픈', () => {
+      const mappings = [
+        mkMapping({
+          folderPath: '한울',
+          folderName: '한울',
+          state: 'direct',
+          customerId: 'c3',
+          customerName: '한울테크',
+        }),
+      ]
+      render(
+        <MappingPreview
+          mappings={mappings}
+          customers={mockCustomers}
+          onMappingChange={mockOnMappingChange}
+          onBack={mockOnBack}
+          onStartUpload={mockOnStartUpload}
+        />
+      )
+
+      // 고객명(한울테크) 재클릭
+      fireEvent.click(screen.getByText('한울테크'))
+      expect(screen.getByPlaceholderText('고객명 검색')).toBeInTheDocument()
+    })
+  })
+
+  describe('업로드 시작 버튼', () => {
+    test('direct 매핑이 하나도 없으면 비활성화', () => {
+      const mappings = [
+        mkMapping({ folderPath: '미매핑', folderName: '미매핑', state: 'unmapped' }),
+      ]
+      render(
+        <MappingPreview
+          mappings={mappings}
+          customers={mockCustomers}
+          onBack={mockOnBack}
+          onStartUpload={mockOnStartUpload}
+        />
+      )
+
+      const uploadBtn = screen.getByRole('button', { name: '고객을 지정해주세요' })
+      expect(uploadBtn).toBeDisabled()
+    })
+
+    test('direct 매핑이 1개 이상이면 direct 폴더들만 전달된다', () => {
+      const directMapping = mkMapping({
+        folderPath: '한울',
+        folderName: '한울',
+        state: 'direct',
+        customerId: 'c3',
+        customerName: '한울테크',
+      })
+      const mappings = [
+        directMapping,
+        mkMapping({ folderPath: '미매핑', folderName: '미매핑', state: 'unmapped' }),
+      ]
+      render(
+        <MappingPreview
+          mappings={mappings}
+          customers={mockCustomers}
+          onBack={mockOnBack}
+          onStartUpload={mockOnStartUpload}
+        />
+      )
+
+      fireEvent.click(screen.getByText('1개 폴더 업로드 시작'))
+      expect(mockOnStartUpload).toHaveBeenCalledTimes(1)
+      expect(mockOnStartUpload).toHaveBeenCalledWith([directMapping])
+    })
+
+    test('뒤로 버튼 클릭 시 onBack 호출', () => {
+      const mappings = [mkMapping({ state: 'unmapped' })]
+      render(
+        <MappingPreview
+          mappings={mappings}
+          customers={mockCustomers}
+          onBack={mockOnBack}
+          onStartUpload={mockOnStartUpload}
+        />
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: '뒤로' }))
+      expect(mockOnBack).toHaveBeenCalledTimes(1)
     })
   })
 })

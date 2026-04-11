@@ -61,17 +61,51 @@ export interface FileValidationResult {
 }
 
 /**
- * 폴더-고객 매핑 정보
+ * 폴더 매핑 상태 (3상태 배타)
+ * @since 2026-04-11
+ *
+ * - direct: 사용자가 명시적으로 고객 지정한 폴더 (업로드 단위)
+ * - inherited: 조상 폴더 중 하나가 direct → 자동 상속 (업로드 단위 아님)
+ * - unmapped: 자기도 조상도 매핑 없음 (업로드되지 않음)
+ *
+ * 불변식: 루트→리프 경로상 direct는 최대 1개 (부모·자식 direct 공존 금지)
+ */
+export type FolderMappingState = 'direct' | 'inherited' | 'unmapped'
+
+/**
+ * 폴더-고객 매핑 정보 (재설계 v4)
+ * @since 2026-04-11
+ *
+ * - folderPath: 트리 내 unique key (e.g. "root/한울/하위A")
+ * - direct 폴더는 업로드 단위 = subtreeFiles (자기 + 하위 전체)
+ * - inherited 폴더는 조상의 업로드에 포함됨 (별도 단위 아님)
+ * - unmapped 폴더는 업로드되지 않음
  */
 export interface FolderMapping {
+  /** 전체 경로 (트리 unique key) */
+  folderPath: string
+  /** 리프 폴더명 */
   folderName: string
+  /** 부모 폴더 경로 (루트면 null) */
+  parentFolderPath: string | null
+  /** 매핑 상태 */
+  state: FolderMappingState
+  /** direct 또는 inherited 시 고객 ID */
   customerId: string | null
+  /** direct 또는 inherited 시 고객명 */
   customerName: string | null
-  matched: boolean
-  files: File[]
-  fileCount: number
-  totalSize: number
-  isPlaceholder?: boolean  // sessionStorage에서 복원된 경우 true (업로드 불가)
+  /** state=inherited일 때 상속 받은 조상 폴더 경로 */
+  inheritedFromPath: string | null
+  /** 자기 직하 파일만 */
+  directFiles: File[]
+  directFileCount: number
+  directTotalSize: number
+  /** 자기 + 전체 하위 파일 (direct 폴더일 때 업로드 단위) */
+  subtreeFiles: File[]
+  subtreeFileCount: number
+  subtreeTotalSize: number
+  /** sessionStorage 복원 플래그 (실제 파일 내용 없음 → 업로드 불가) */
+  isPlaceholder?: boolean
 }
 
 /**

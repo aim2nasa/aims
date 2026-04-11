@@ -1,16 +1,23 @@
 /**
  * MappingPreview Component
  * @since 2025-12-05
- * @version 3.0.0
+ * @version 4.0.0 (2026-04-11 재설계 — 명시적 인식 기반 3상태 매핑)
  *
- * 폴더-고객 매핑 미리보기 (윈도우 탐색기 스타일 트리)
+ * 폴더-고객 매핑 미리보기 (3상태 배타: direct / inherited / unmapped)
+ * - 드롭 직후 모든 폴더는 unmapped
+ * - [고객 지정] 버튼 → 드롭다운 → 명시적 매핑 확정 → direct
+ * - direct 폴더의 자손은 자동으로 inherited
+ * - 부모·자식 direct 공존 금지 (R3)
+ * - [해제] → 즉시 unmapped 전환, 확인 모달 없음
  */
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../../components/SFSymbol'
 import Button from '@/shared/ui/Button'
+import { Tooltip } from '@/shared/ui/Tooltip'
 import { formatFileSize } from '../utils/fileValidation'
 import type { CustomerForMatching } from '../utils/customerMatcher'
+import { canDirectMap, type DirectMapConflict } from '../utils/customerMatcher'
 import type { FolderMapping } from '../types'
 import './MappingPreview.css'
 
@@ -41,109 +48,111 @@ function CustomerTypeIcon({ customerType }: { customerType?: string }) {
   return <PersonIcon />
 }
 
+/* ========== 인라인 아이콘 (SF Symbol 스타일, 렌더 안정성을 위해 SVG로 직접 구현) ========== */
+
+/** chevron.right — 접힘 상태 */
+function IconChevronRight() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+      <path d="M3.5 1.5L7 5L3.5 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/** chevron.down — 펼침 상태 */
+function IconChevronDown() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+      <path d="M1.5 3.5L5 7L8.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/** folder — unmapped 폴더 아이콘 */
+function IconFolder() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path
+        d="M1.5 3.5C1.5 2.94772 1.94772 2.5 2.5 2.5H5.5L6.75 4H11.5C12.0523 4 12.5 4.44772 12.5 5V10.5C12.5 11.0523 12.0523 11.5 11.5 11.5H2.5C1.94772 11.5 1.5 11.0523 1.5 10.5V3.5Z"
+        stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+/** link — inherited 체인 아이콘 */
+function IconLink() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+      <path d="M5 8L8 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M4.5 7.5L3 9C2.17 9.83 2.17 11.17 3 12C3.83 12.83 5.17 12.83 6 12L7.5 10.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M8.5 5.5L10 4C10.83 3.17 10.83 1.83 10 1C9.17 0.17 7.83 0.17 7 1L5.5 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+/** arrow.turn.down.right — inherited 고객명 접두 */
+function IconTurnDownRight() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+      <path d="M1.5 1.5V5.5C1.5 6.33 2.17 7 3 7H8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 5L8 7L6 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/** plus.circle — 지정 버튼 아이콘 */
+function IconPlusCircle() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+      <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M5.5 3.5V7.5M3.5 5.5H7.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+/** lock — disabled 지정 버튼 아이콘 */
+function IconLock() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+      <rect x="2" y="5" width="7" height="5" rx="0.8" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M3.5 5V3.5C3.5 2.4 4.4 1.5 5.5 1.5C6.6 1.5 7.5 2.4 7.5 3.5V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+/** exclamationmark.triangle — 경고 아이콘 */
+function IconWarningTriangle() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <path d="M6 1.5L11 10.5H1L6 1.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M6 5V7.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <circle cx="6" cy="9" r="0.6" fill="currentColor" />
+    </svg>
+  )
+}
+
 interface MappingPreviewProps {
   mappings: FolderMapping[]
-  parentFolderName?: string | null  // 재그룹화 시 원본 부모 폴더명
-  parentRootFiles?: File[]          // 부모 폴더 직하 파일들
-  customers?: CustomerForMatching[]  // 전체 고객 목록 (수동 매핑 검색용)
-  onMappingChange?: (folderName: string, customer: CustomerForMatching | null) => void  // 매핑 변경 콜백
+  customers?: CustomerForMatching[]
+  /** 고객 지정/해제 콜백. customer=null이면 해제 */
+  onMappingChange?: (folderPath: string, customer: CustomerForMatching | null) => void
   onBack: () => void
-  onStartUpload: (selectedMappings: FolderMapping[]) => void  // 선택된 매핑만 업로드
-  expandedPaths?: Set<string>  // 외부에서 제어하는 펼침 상태
-  onExpandedPathsChange?: (paths: Set<string>) => void  // 펼침 상태 변경 콜백
-}
-
-// 트리 노드 타입
-interface TreeNode {
-  name: string
-  type: 'folder' | 'file'
-  size?: number
-  children?: TreeNode[]
-  path: string
-}
-
-// 파일 목록을 트리 구조로 변환
-function buildTree(files: File[], rootFolder: string): TreeNode[] {
-  const root: TreeNode[] = []
-
-  for (const file of files) {
-    const relativePath = (file as File & { webkitRelativePath?: string }).webkitRelativePath || file.name
-    const pathParts = relativePath.split('/')
-    const startIndex = pathParts.indexOf(rootFolder) + 1
-    const parts = pathParts.slice(startIndex)
-
-    let current = root
-    let currentPath = rootFolder
-
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i]
-      const isLast = i === parts.length - 1
-      currentPath = `${currentPath}/${part}`
-
-      if (isLast) {
-        current.push({
-          name: part,
-          type: 'file',
-          size: file.size,
-          path: currentPath
-        })
-      } else {
-        let folder = current.find(n => n.type === 'folder' && n.name === part)
-        if (!folder) {
-          folder = { name: part, type: 'folder', children: [], path: currentPath }
-          current.push(folder)
-        }
-        current = folder.children!
-      }
-    }
-  }
-
-  // 정렬: 폴더 먼저, 그 다음 파일 (알파벳순)
-  const sortNodes = (nodes: TreeNode[]): TreeNode[] => {
-    return nodes.sort((a, b) => {
-      if (a.type !== b.type) return a.type === 'folder' ? -1 : 1
-      return a.name.localeCompare(b.name, 'ko')
-    }).map(node => {
-      if (node.children) {
-        node.children = sortNodes(node.children)
-      }
-      return node
-    })
-  }
-
-  return sortNodes(root)
-}
-
-// 폴더 내 파일 수 계산
-function countFiles(nodes: TreeNode[]): number {
-  return nodes.reduce((count, node) => {
-    if (node.type === 'file') return count + 1
-    if (node.children) return count + countFiles(node.children)
-    return count
-  }, 0)
-}
-
-// 폴더 크기 계산
-function calculateSize(nodes: TreeNode[]): number {
-  return nodes.reduce((sum, node) => {
-    if (node.type === 'file') return sum + (node.size || 0)
-    if (node.children) return sum + calculateSize(node.children)
-    return sum
-  }, 0)
+  onStartUpload: (selectedMappings: FolderMapping[]) => void
+  expandedPaths?: Set<string>
+  onExpandedPathsChange?: (paths: Set<string>) => void
 }
 
 export default function MappingPreview({
   mappings,
-  parentFolderName,
-  parentRootFiles,
   customers,
   onMappingChange,
   onBack,
   onStartUpload,
   expandedPaths: controlledExpandedPaths,
-  onExpandedPathsChange
+  onExpandedPathsChange,
 }: MappingPreviewProps) {
-  // 수동 매핑 드롭다운 상태
+  // 수동 매핑 드롭다운 상태 (folderPath)
   const [assigningFolder, setAssigningFolder] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -235,8 +244,11 @@ export default function MappingPreview({
 
     // 현재 지정 중인 폴더명으로 유사 고객을 상단 정렬 (점수 높은 순)
     if (assigningFolder) {
-      const folder = assigningFolder.toLowerCase()
-      const tokens = extractTokens(assigningFolder)
+      // 드롭다운은 folderPath 기준으로 열려 있으므로 leaf name 추출
+      const assigningMapping = mappings.find(m => m.folderPath === assigningFolder)
+      const leafName = assigningMapping?.folderName ?? assigningFolder
+      const folder = leafName.toLowerCase()
+      const tokens = extractTokens(leafName)
       base.sort((a, b) => {
         const scoreA = getRelevanceScore(a.personal_info?.name || '', folder, tokens)
         const scoreB = getRelevanceScore(b.personal_info?.name || '', folder, tokens)
@@ -245,127 +257,42 @@ export default function MappingPreview({
     }
 
     return base
-  }, [customers, searchQuery, assigningFolder, extractTokens, getRelevanceScore])
+  }, [customers, searchQuery, assigningFolder, extractTokens, getRelevanceScore, mappings])
+
+  // 현재 direct 매핑 Map (공존 금지 검증용)
+  const directMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const m of mappings) {
+      if (m.state === 'direct' && m.customerId) {
+        map.set(m.folderPath, m.customerId)
+      }
+    }
+    return map
+  }, [mappings])
 
   // 고객 선택 핸들러
-  const handleCustomerSelect = useCallback((folderName: string, customer: CustomerForMatching) => {
-    onMappingChange?.(folderName, customer)
+  const handleCustomerSelect = useCallback((folderPath: string, customer: CustomerForMatching) => {
+    onMappingChange?.(folderPath, customer)
     setAssigningFolder(null)
     setSearchQuery('')
   }, [onMappingChange])
 
   // 매핑 해제 핸들러
-  const handleUnassign = useCallback((folderName: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    onMappingChange?.(folderName, null)
+  const handleUnassign = useCallback((folderPath: string) => {
+    onMappingChange?.(folderPath, null)
   }, [onMappingChange])
 
-  // 수동 매핑 여부 판별 (matched이지만 folderName !== customerName인 경우)
-  const isManuallyMapped = useCallback((mapping: FolderMapping) => {
-    return mapping.matched && mapping.customerName !== null && mapping.folderName !== mapping.customerName
-  }, [])
-
-  // 내부 상태 (controlled prop이 없을 때 사용)
+  // 내부 펼침 상태 (controlled prop 없을 때 사용) — 루트들만 기본 펼침
   const [internalExpandedPaths, setInternalExpandedPaths] = useState<Set<string>>(() => {
-    // 기본적으로 루트 폴더들만 펼침
-    return new Set(mappings.map(m => m.folderName))
+    return new Set(mappings.filter(m => m.parentFolderPath === null).map(m => m.folderPath))
   })
 
-  // controlled 또는 uncontrolled 모드 지원
   const expandedPaths = controlledExpandedPaths ?? internalExpandedPaths
   const setExpandedPaths = (onExpandedPathsChange ?? setInternalExpandedPaths) as React.Dispatch<React.SetStateAction<Set<string>>>
 
-  // 선택된 폴더 상태 (기본값: 모든 매칭된 폴더 선택)
-  const [selectedFolders, setSelectedFolders] = useState<Set<string>>(() => {
-    return new Set(mappings.filter(m => m.matched).map(m => m.folderName))
-  })
-
-  // mappings가 변경될 때 선택 상태 동기화 (모든 매칭된 폴더 자동 선택)
-  useEffect(() => {
-    setSelectedFolders(new Set(mappings.filter(m => m.matched).map(m => m.folderName)))
-  }, [mappings])
-
-  const stats = useMemo(() => {
-    const matched = mappings.filter(m => m.matched).length
-    const unmatched = mappings.length - matched
-    const hasPlaceholder = mappings.some(m => m.isPlaceholder)
-
-    // 선택된 폴더만의 파일 수와 크기 (실시간 업데이트)
-    const selectedMappings = mappings.filter(m => m.matched && selectedFolders.has(m.folderName))
-    const selectedFiles = selectedMappings.reduce((sum, m) => sum + m.fileCount, 0)
-    const selectedSize = selectedMappings.reduce((sum, m) => sum + m.totalSize, 0)
-
-    return { matched, unmatched, selectedFiles, selectedSize, hasPlaceholder }
-  }, [mappings, selectedFolders])
-
-  // 선택된 매칭 폴더 수
-  const selectedCount = useMemo(() => {
-    return mappings.filter(m => m.matched && selectedFolders.has(m.folderName)).length
-  }, [mappings, selectedFolders])
-
-  // 선택된 폴더가 있고, placeholder가 아니어야 업로드 가능
-  const canUpload = selectedCount > 0 && !stats.hasPlaceholder
-
-  // 폴더 선택 토글
-  const toggleSelection = useCallback((folderName: string, e: React.MouseEvent) => {
-    e.stopPropagation() // 트리 펼침/접힘 방지
-    setSelectedFolders(prev => {
-      const next = new Set(prev)
-      if (next.has(folderName)) {
-        next.delete(folderName)
-      } else {
-        next.add(folderName)
-      }
-      return next
-    })
-  }, [])
-
-  // 전체 선택/해제
-  const toggleAllSelection = useCallback(() => {
-    const matchedFolders = mappings.filter(m => m.matched).map(m => m.folderName)
-    if (selectedCount === stats.matched) {
-      // 모두 선택됨 -> 모두 해제
-      setSelectedFolders(new Set())
-    } else {
-      // 일부 또는 없음 -> 모두 선택
-      setSelectedFolders(new Set(matchedFolders))
-    }
-  }, [mappings, selectedCount, stats.matched])
-
-  // 업로드 시작 핸들러
-  const handleStartUpload = useCallback(() => {
-    const selectedMappings = mappings.filter(m => m.matched && selectedFolders.has(m.folderName))
-    onStartUpload(selectedMappings)
-  }, [mappings, selectedFolders, onStartUpload])
-
-  // 모든 폴더 경로 수집
-  const allFolderPaths = useMemo(() => {
-    const paths: string[] = []
-
-    // 부모 폴더가 있으면 포함
-    if (parentFolderName) {
-      paths.push(parentFolderName)
-    }
-
-    const collectPaths = (nodes: TreeNode[]) => {
-      for (const node of nodes) {
-        if (node.type === 'folder') {
-          paths.push(node.path)
-          if (node.children) collectPaths(node.children)
-        }
-      }
-    }
-
-    for (const mapping of mappings) {
-      paths.push(mapping.folderName)
-      const tree = buildTree(mapping.files, mapping.folderName)
-      collectPaths(tree)
-    }
-
-    return paths
-  }, [mappings, parentFolderName])
-
-  const allExpanded = expandedPaths.size === allFolderPaths.length
+  // 모든 폴더 경로 수집 (전체 펼침/접기용)
+  const allFolderPaths = useMemo(() => mappings.map(m => m.folderPath), [mappings])
+  const allExpanded = expandedPaths.size === allFolderPaths.length && allFolderPaths.length > 0
 
   const togglePath = useCallback((path: string) => {
     setExpandedPaths((prev: Set<string>) => {
@@ -387,120 +314,213 @@ export default function MappingPreview({
     }
   }, [allExpanded, allFolderPaths, setExpandedPaths])
 
-  // 트리 노드 렌더링 (FolderDropZone과 동일한 CSS 라인 구조)
-  const renderNode = (node: TreeNode, isLast: boolean): React.ReactNode => {
-    const isFolder = node.type === 'folder'
-    const isExpanded = expandedPaths.has(node.path)
-    const hasChildren = isFolder && node.children && node.children.length > 0
+  // ==================== 통계 ====================
 
-    return (
-      <div key={node.path} className={`guide-node ${isLast ? 'last' : ''}`}>
-        <div
-          className={`guide-node-content ${isFolder ? 'clickable' : ''}`}
-          onClick={isFolder ? () => togglePath(node.path) : undefined}
-        >
-          {isFolder && (
-            <span className="guide-toggle">
-              {hasChildren ? (isExpanded ? '▼' : '▶') : ''}
-            </span>
-          )}
-          <span className={`guide-icon ${isFolder ? 'folder' : 'file'}`}>
-            {isFolder ? '📁' : '📄'}
-          </span>
-          <span className={`guide-name ${isFolder ? 'subfolder' : 'file'}`}>{node.name}</span>
-          {isFolder && hasChildren && (
-            <span className="guide-info">{countFiles(node.children!)}개 · {formatFileSize(calculateSize(node.children || []))}</span>
-          )}
-          {!isFolder && (
-            <span className="guide-info">{formatFileSize(node.size || 0)}</span>
-          )}
-        </div>
-        {isFolder && isExpanded && hasChildren &&
-          node.children!.map((child, idx) =>
-            renderNode(child, idx === node.children!.length - 1)
-          )
+  const stats = useMemo(() => {
+    const directMappings = mappings.filter(m => m.state === 'direct')
+    const unmapped = mappings.filter(m => m.state === 'unmapped')
+    const uniqueCustomers = new Set(directMappings.map(m => m.customerId).filter(Boolean)).size
+    const totalFiles = directMappings.reduce((sum, m) => sum + m.subtreeFileCount, 0)
+    const totalSize = directMappings.reduce((sum, m) => sum + m.subtreeTotalSize, 0)
+    const hasPlaceholder = mappings.some(m => m.isPlaceholder)
+
+    return {
+      directCount: directMappings.length,
+      uniqueCustomers,
+      unmappedCount: unmapped.length,
+      totalFiles,
+      totalSize,
+      hasPlaceholder,
+    }
+  }, [mappings])
+
+  const canUpload = stats.directCount > 0 && !stats.hasPlaceholder
+
+  const handleStartUpload = useCallback(() => {
+    // 업로드 단위 = direct 상태 매핑만
+    const directMappings = mappings.filter(m => m.state === 'direct')
+    onStartUpload(directMappings)
+  }, [mappings, onStartUpload])
+
+  // ==================== 트리 구축 (parent 기준 children 맵) ====================
+
+  const childrenByParent = useMemo(() => {
+    const map = new Map<string | null, FolderMapping[]>()
+    for (const m of mappings) {
+      const key = m.parentFolderPath
+      const list = map.get(key) || []
+      list.push(m)
+      map.set(key, list)
+    }
+    return map
+  }, [mappings])
+
+  // ==================== 노드 렌더링 ====================
+
+  const renderMappingNode = useCallback((mapping: FolderMapping, depth: number, isLast: boolean): React.ReactNode => {
+    const children = childrenByParent.get(mapping.folderPath) || []
+    const hasChildren = children.length > 0 || mapping.directFiles.length > 0
+    const isExpanded = expandedPaths.has(mapping.folderPath)
+    const showAssignDropdown = assigningFolder === mapping.folderPath
+
+    // 공존 금지 검증 (unmapped 행의 [고객 지정] 버튼용)
+    // 참고: inherited 행은 [고객 지정] 버튼을 렌더하지 않으므로 조상 충돌은 주로 descendant 케이스에서 발생.
+    //       다만 비정상 상태 방어를 위해 ancestor 메시지도 함께 제공한다.
+    const guardResult: { ok: true } | { ok: false; conflicts: DirectMapConflict[] } =
+      mapping.state === 'unmapped' ? canDirectMap(mapping.folderPath, directMap) : { ok: true }
+    const isGuarded = guardResult.ok === false
+    let guardMessage = ''
+    if (guardResult.ok === false) {
+      const descendants = guardResult.conflicts.filter(c => c.type === 'descendant')
+      const ancestors = guardResult.conflicts.filter(c => c.type === 'ancestor')
+
+      if (ancestors.length > 0) {
+        // 조상 방향 충돌 우선 안내 (상위 폴더가 이미 direct인 경우)
+        const ancestorLeaf = ancestors[0].path.split('/').pop() || ancestors[0].path
+        guardMessage = `상위 '${ancestorLeaf}' 폴더가 이미 지정되어 있습니다. 해제 후 지정할 수 있습니다`
+      } else if (descendants.length > 0) {
+        const leaves = descendants.map(c => c.path.split('/').pop() || c.path)
+        if (leaves.length <= 3) {
+          guardMessage = `하위 '${leaves.join("', '")}' 폴더에 매핑이 있습니다. 해제 후 지정할 수 있습니다`
+        } else {
+          guardMessage = `하위 '${leaves[0]}', '${leaves[1]}' 외 ${leaves.length - 2}개 폴더에 매핑이 있습니다. 해제 후 지정할 수 있습니다`
         }
-      </div>
-    )
-  }
+      }
+    }
 
-  // 매핑 노드 렌더링 (parentFolderName 유무와 관계없이 공통 사용)
-  const renderMappingNode = (mapping: FolderMapping, isLast: boolean) => {
-    const isExpanded = expandedPaths.has(mapping.folderName)
-    const tree = buildTree(mapping.files, mapping.folderName)
-    const isSelected = selectedFolders.has(mapping.folderName)
-    const manuallyMapped = isManuallyMapped(mapping)
-    const showAssignDropdown = assigningFolder === mapping.folderName
-
-    // 수동 매핑된 고객의 customer_type 찾기
-    const mappedCustomer = manuallyMapped && customers
+    // 매핑된 고객의 customer_type 찾기
+    const mappedCustomer = mapping.customerId && customers
       ? customers.find(c => c._id === mapping.customerId)
       : null
 
+    const stateClass = `state-${mapping.state}`
+
+    // inherited 행: 상속 출처(부모 중 customerId가 일치하는 direct 조상) 찾기
+    let inheritedSourceLeaf = ''
+    if (mapping.state === 'inherited' && mapping.customerId) {
+      let cursor: string | null = mapping.parentFolderPath
+      while (cursor) {
+        const parent = mappings.find(m => m.folderPath === cursor)
+        if (!parent) break
+        if (parent.state === 'direct' && parent.customerId === mapping.customerId) {
+          inheritedSourceLeaf = parent.folderName
+          break
+        }
+        cursor = parent.parentFolderPath
+      }
+    }
+
     return (
-      <div key={mapping.folderName} className={`guide-node ${isLast ? 'last' : ''} has-children`}>
+      <div key={mapping.folderPath} className={`guide-node ${isLast ? 'last' : ''} has-children`} style={{ marginLeft: depth === 0 ? 0 : undefined }}>
         <div
-          className={`guide-node-content customer-root ${mapping.matched ? 'matched' : 'unmatched'} ${isSelected ? 'selected' : ''}`}
-          onClick={() => togglePath(mapping.folderName)}
+          className={`guide-node-content customer-root ${stateClass}`}
+          onClick={() => togglePath(mapping.folderPath)}
         >
-          {mapping.matched && (
-            <span
-              className={`guide-checkbox ${isSelected ? 'checked' : ''}`}
-              onClick={(e) => toggleSelection(mapping.folderName, e)}
-            >
-              {isSelected ? '☑' : '☐'}
-            </span>
-          )}
-          <span className="guide-toggle">
-            {isExpanded ? '▼' : '▶'}
+          <span className="guide-toggle" aria-hidden="true">
+            {hasChildren ? (isExpanded ? <IconChevronDown /> : <IconChevronRight />) : null}
           </span>
-          {mapping.matched ? (
+
+          {/* 아이콘 */}
+          {mapping.state === 'direct' && mappedCustomer ? (
             <span className="guide-icon customer-icon">
-              {manuallyMapped ? (
-                <CustomerTypeIcon customerType={mappedCustomer?.insurance_info?.customer_type} />
-              ) : (
-                <SFSymbol name="person" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
-              )}
+              <CustomerTypeIcon customerType={mappedCustomer.insurance_info?.customer_type} />
             </span>
+          ) : mapping.state === 'inherited' ? (
+            <span className="guide-icon folder-inherited"><IconLink /></span>
           ) : (
-            <span className="guide-icon folder">📁</span>
+            <span className="guide-icon folder"><IconFolder /></span>
           )}
-          <span className={`guide-name customer ${mapping.matched ? '' : 'unmatched'}`}>
-            {manuallyMapped ? `${mapping.customerName} (${mapping.folderName})` : mapping.folderName}
-          </span>
-          {manuallyMapped && (
+
+          {/* 폴더명 */}
+          <span className={`guide-name folder-label ${stateClass}`}>{mapping.folderName}</span>
+
+          {/* 상태별 UI */}
+          {mapping.state === 'direct' && (
             <>
-              <span className="guide-manual-badge">수동 지정</span>
-              <button
-                type="button"
-                className="guide-unassign-btn"
-                onClick={(e) => handleUnassign(mapping.folderName, e)}
-                title="매핑 해제"
+              <span className="state-separator" aria-hidden="true">·</span>
+              <span className="state-customer-type-icon" aria-hidden="true">
+                {mappedCustomer && <CustomerTypeIcon customerType={mappedCustomer.insurance_info?.customer_type} />}
+              </span>
+              <span
+                className="state-customer-name"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  // D3: direct 행의 고객명 재클릭 → 드롭다운 재오픈
+                  setAssigningFolder(mapping.folderPath)
+                  setSearchQuery('')
+                }}
+                role="button"
+                tabIndex={0}
               >
-                ✕
-              </button>
+                {mapping.customerName}
+              </span>
+              <span className="state-unassign-wrapper" onClick={(e) => e.stopPropagation()}>
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={() => handleUnassign(mapping.folderPath)}
+                >
+                  해제
+                </Button>
+              </span>
             </>
           )}
-          {!mapping.matched && (
+
+          {mapping.state === 'inherited' && (
             <>
-              <span className="guide-note">미매칭</span>
-              {customers && customers.length > 0 && onMappingChange && (
-                <button
-                  type="button"
-                  className="guide-assign-btn"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setAssigningFolder(prev => prev === mapping.folderName ? null : mapping.folderName)
+              <span className="state-inherited-prefix" aria-hidden="true"><IconTurnDownRight /></span>
+              <Tooltip content={inheritedSourceLeaf ? `상위 '${inheritedSourceLeaf}'에서 상속됨` : '상위 폴더에서 상속됨'} placement="top">
+                <span className="state-inherited-customer">{mapping.customerName}</span>
+              </Tooltip>
+              {/* 접근성/테스트 호환: 상속 표식은 시각적으로 숨기고 DOM에 유지 */}
+              <span className="state-inherited-note visually-hidden">(상속)</span>
+            </>
+          )}
+
+          {mapping.state === 'unmapped' && customers && customers.length > 0 && onMappingChange && (
+            <span className="state-assign-wrapper" onClick={(e) => e.stopPropagation()}>
+              {isGuarded ? (
+                <Tooltip content={guardMessage} placement="top" delay={300}>
+                  <span className="state-assign-disabled-wrapper">
+                    <Button
+                      variant="link"
+                      size="sm"
+                      disabled
+                      aria-label="고객 지정"
+                      className="assign-link-btn assign-link-btn--disabled"
+                      leftIcon={<IconLock />}
+                    >
+                      지정 불가
+                    </Button>
+                  </span>
+                </Tooltip>
+              ) : (
+                <Button
+                  variant="link"
+                  size="sm"
+                  aria-label="고객 지정"
+                  className="assign-link-btn"
+                  leftIcon={<IconPlusCircle />}
+                  onClick={() => {
+                    setAssigningFolder(prev => prev === mapping.folderPath ? null : mapping.folderPath)
                     setSearchQuery('')
                   }}
                 >
-                  고객 지정
-                </button>
+                  지정
+                </Button>
               )}
-            </>
+            </span>
           )}
-          <span className="guide-info">{mapping.fileCount}개 · {formatFileSize(mapping.totalSize)}</span>
+
+          {/* 통계 (D6: direct는 subtree, 나머지는 direct 파일만) */}
+          <span className="guide-info">
+            {mapping.state === 'direct'
+              ? `${mapping.subtreeFileCount}개 · ${formatFileSize(mapping.subtreeTotalSize)}`
+              : `${mapping.directFileCount}개 · ${formatFileSize(mapping.directTotalSize)}`
+            }
+          </span>
         </div>
+
         {/* 고객 검색 드롭다운 */}
         {showAssignDropdown && (
           <div className="customer-search-dropdown" ref={dropdownRef}>
@@ -515,133 +535,95 @@ export default function MappingPreview({
             />
             <div className="customer-search-list">
               {filteredCustomers.length > 0 ? (
-                filteredCustomers.map(customer => (
-                  <div
-                    key={customer._id}
-                    className="customer-search-item"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleCustomerSelect(mapping.folderName, customer)
-                    }}
-                  >
-                    <span className="customer-type-icon">
-                      <CustomerTypeIcon customerType={customer.insurance_info?.customer_type} />
-                    </span>
-                    <span>{customer.personal_info?.name || '(이름 없음)'}</span>
-                  </div>
-                ))
+                filteredCustomers.map(customer => {
+                  // D2: 동명이인 구분 (생년월일 → 전화번호 마스킹)
+                  const sameName = filteredCustomers.filter(c => c.personal_info?.name === customer.personal_info?.name)
+                  const distinguisher = sameName.length > 1
+                    ? (customer.personal_info?.birth_date
+                        ? ` (${customer.personal_info.birth_date})`
+                        : customer.personal_info?.phone
+                          ? ` (${customer.personal_info.phone.slice(0, 3)}-****-${customer.personal_info.phone.slice(-4)})`
+                          : '')
+                    : ''
+                  return (
+                    <div
+                      key={customer._id}
+                      className="customer-search-item"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleCustomerSelect(mapping.folderPath, customer)
+                      }}
+                    >
+                      <span className="customer-type-icon">
+                        <CustomerTypeIcon customerType={customer.insurance_info?.customer_type} />
+                      </span>
+                      <span>{customer.personal_info?.name || '(이름 없음)'}{distinguisher}</span>
+                    </div>
+                  )
+                })
               ) : (
                 <div className="customer-search-empty">검색 결과가 없습니다</div>
               )}
             </div>
           </div>
         )}
-        {isExpanded && tree.length > 0 &&
-          tree.map((node, nodeIdx) =>
-            renderNode(node, nodeIdx === tree.length - 1)
+
+        {/* 자식 노드 재귀 렌더 */}
+        {isExpanded && children.length > 0 && children.map((child, idx) =>
+          renderMappingNode(child, depth + 1, idx === children.length - 1)
+        )}
+
+        {/* 자기 직하 파일 (펼침 상태에서만) */}
+        {isExpanded && mapping.directFiles.length > 0 && mapping.directFiles.map((file, idx) => {
+          const isLastFile = idx === mapping.directFiles.length - 1 && children.length === 0
+          return (
+            <div key={`${mapping.folderPath}/__file__/${file.name}`} className={`guide-node ${isLastFile ? 'last' : ''}`}>
+              <div className="guide-node-content">
+                <span className="guide-icon file">📄</span>
+                <span className="guide-name file">{file.name}</span>
+                <span className="guide-info">{formatFileSize(file.size)}</span>
+              </div>
+            </div>
           )
-        }
+        })}
       </div>
     )
-  }
+  }, [childrenByParent, expandedPaths, assigningFolder, searchQuery, customers, onMappingChange, directMap, filteredCustomers, togglePath, handleCustomerSelect, handleUnassign])
+
+  // 루트 노드들
+  const rootMappings = useMemo(() => childrenByParent.get(null) || [], [childrenByParent])
 
   return (
     <div className="mapping-preview">
-      {/* 요약 통계 */}
-      <div className="preview-stats">
-        <div className="stat-item">
-          <span className="stat-value matched">{selectedCount}/{stats.matched}</span>
-          <span className="stat-label">선택됨</span>
-        </div>
-        <div className="stat-divider" />
-        <div className="stat-item">
-          <span className="stat-value unmatched">{stats.unmatched}</span>
-          <span className="stat-label">미매칭</span>
-        </div>
-        <div className="stat-divider" />
-        <div className="stat-item">
-          <span className="stat-value">{stats.selectedFiles}</span>
-          <span className="stat-label">파일</span>
-        </div>
-        <div className="stat-divider" />
-        <div className="stat-item">
-          <span className="stat-value">{formatFileSize(stats.selectedSize)}</span>
-          <span className="stat-label">총 크기</span>
-        </div>
-      </div>
-
-      {/* 매칭 설명 */}
-      <div className="preview-legend">
-        <span className="legend-item matched">매칭: 고객명과 일치</span>
-        <span className="legend-divider">|</span>
-        <span className="legend-item unmatched">미매칭: 일치하는 고객명 없음</span>
+      {/* 상단 요약 (v5: 중립 톤 + 미매핑 경고 보조 라인) */}
+      <div
+        className="preview-summary"
+        data-ready={stats.unmappedCount === 0 && stats.directCount > 0 ? 'true' : undefined}
+      >
+        업로드 대상: <strong>{stats.directCount}개 폴더</strong> · <strong>{stats.uniqueCustomers}명 고객</strong> · <strong>{stats.totalFiles}개 파일</strong> · <strong>{formatFileSize(stats.totalSize)}</strong>
+        {stats.unmappedCount > 0 && (
+          <span className="preview-summary-warn">
+            <IconWarningTriangle />
+            <span>미매핑 {stats.unmappedCount}개는 업로드되지 않습니다</span>
+          </span>
+        )}
       </div>
 
       {/* 트리 헤더 */}
       <div className="tree-header">
         <div className="tree-header-left">
           <span>폴더 구조</span>
-          {stats.matched > 0 && (
-            <button type="button" className="select-all-btn" onClick={toggleAllSelection}>
-              {selectedCount === stats.matched ? '전체 해제' : '전체 선택'}
-            </button>
-          )}
         </div>
-        <button type="button" className="toggle-all-btn" onClick={toggleAll}>
-          {allExpanded ? '▲ 모두 접기' : '▼ 모두 펼치기'}
-        </button>
+        <Button type="button" variant="ghost" size="sm" onClick={toggleAll}>
+          {allExpanded ? '모두 접기' : '모두 펼치기'}
+        </Button>
       </div>
 
-      {/* 트리 뷰 - FolderDropZone과 동일한 CSS 라인 구조 */}
+      {/* 트리 뷰 */}
       <div className="tree-container">
         <div className="guide-node root">
-          {parentFolderName ? (
-            // 부모 폴더 wrapper (재그룹화된 경우)
-            <div className="guide-node has-children">
-              <div
-                className="guide-node-content customer-root unmatched"
-                onClick={() => togglePath(parentFolderName)}
-              >
-                <span className="guide-toggle">
-                  {expandedPaths.has(parentFolderName) ? '▼' : '▶'}
-                </span>
-                <span className="guide-icon folder">📁</span>
-                <span className="guide-name customer unmatched">{parentFolderName}</span>
-                <span className="guide-note">미매칭</span>
-                <span className="guide-info">
-                  {mappings.reduce((sum, m) => sum + m.fileCount, 0) + (parentRootFiles?.length ?? 0)}개 · {formatFileSize(
-                    mappings.reduce((sum, m) => sum + m.totalSize, 0) + (parentRootFiles?.reduce((sum, f) => sum + f.size, 0) ?? 0)
-                  )}
-                </span>
-              </div>
-              {expandedPaths.has(parentFolderName) && (
-                <>
-                  {/* 부모 폴더 직하 루트 파일들 */}
-                  {parentRootFiles?.map((file, fileIdx) => {
-                    const isLastRootFile = fileIdx === (parentRootFiles.length - 1)
-                    const isLast = isLastRootFile && mappings.length === 0
-                    return (
-                      <div key={`root-${file.name}`} className={`guide-node ${isLast ? 'last' : ''}`}>
-                        <div className="guide-node-content">
-                          <span className="guide-icon file">📄</span>
-                          <span className="guide-name file">{file.name}</span>
-                          <span className="guide-info">{formatFileSize(file.size)}</span>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  {/* 하위 폴더(매핑) 목록 */}
-                  {mappings.map((mapping, idx) =>
-                    renderMappingNode(mapping, idx === mappings.length - 1)
-                  )}
-                </>
-              )}
-            </div>
-          ) : (
-            // 기존 동작: 부모 없이 매핑 목록 직접 표시
-            mappings.map((mapping, idx) =>
-              renderMappingNode(mapping, idx === mappings.length - 1)
-            )
+          {rootMappings.map((mapping, idx) =>
+            renderMappingNode(mapping, 0, idx === rootMappings.length - 1)
           )}
         </div>
       </div>
@@ -654,14 +636,6 @@ export default function MappingPreview({
         </div>
       )}
 
-      {/* 경고 - 미매칭 */}
-      {stats.unmatched > 0 && !stats.hasPlaceholder && (
-        <div className="preview-warning">
-          <SFSymbol name="exclamationmark-triangle-fill" size={SFSymbolSize.FOOTNOTE} weight={SFSymbolWeight.MEDIUM} />
-          <span>미매칭된 {stats.unmatched}개 폴더는 업로드되지 않습니다. "고객 지정" 버튼으로 고객을 수동 연결할 수 있습니다.</span>
-        </div>
-      )}
-
       {/* 버튼 */}
       <div className="preview-actions">
         <Button variant="secondary" onClick={onBack}>뒤로</Button>
@@ -669,8 +643,8 @@ export default function MappingPreview({
           {stats.hasPlaceholder
             ? '폴더 다시 선택 필요'
             : canUpload
-              ? `${selectedCount}개 폴더 업로드 시작`
-              : '업로드할 폴더를 선택하세요'}
+              ? `${stats.directCount}개 폴더 업로드 시작`
+              : '고객을 지정해주세요'}
         </Button>
       </div>
     </div>

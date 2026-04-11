@@ -53,14 +53,10 @@
 
     /* ==================== 매핑 프리뷰 ==================== */
 
-    /* 통계 영역 패딩 축소 */
-    .preview-stats {
-      padding: var(--spacing-sm) var(--spacing-md);
-    }
-
-    .stat-item {
-      padding: 0 var(--spacing-md);
-      min-width: 56px;
+    /* 상단 요약 패딩 축소 */
+    .preview-summary {
+      padding: var(--spacing-xs) var(--spacing-sm);
+      font-size: var(--font-size-caption-2);
     }
 
     /* 트리 컨테이너 패딩 축소 */

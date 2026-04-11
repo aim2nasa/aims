@@ -13,7 +13,23 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { BatchUploadApi, type FileUploadResult } from '../api/batchUploadApi'
-import type { FolderMapping, DuplicateAction, DuplicateFileInfo } from '../types'
+import type { DuplicateAction, DuplicateFileInfo } from '../types'
+
+/**
+ * 업로드 훅이 기대하는 폴더 매핑 형식 (legacy 호환)
+ *
+ * 2026-04-11 FolderMapping v4 재설계 이후, 호출자가 direct 폴더들을 이 형식으로
+ * 어댑팅하여 전달한다 (BatchDocumentUploadView에서 subtreeFiles → files로 매핑).
+ */
+export interface UploadFolderMapping {
+  folderName: string
+  customerId: string | null
+  customerName: string | null
+  matched: boolean
+  files: File[]
+  fileCount: number
+  totalSize: number
+}
 import {
   getCustomerFileHashes,
   checkDuplicateFile,
@@ -95,7 +111,7 @@ export interface BatchUploadProgress {
  */
 export interface UseBatchUploadReturn {
   progress: BatchUploadProgress
-  startUpload: (mappings: FolderMapping[]) => Promise<void>
+  startUpload: (mappings: UploadFolderMapping[]) => Promise<void>
   pauseUpload: () => void
   resumeUpload: () => void
   cancelUpload: () => void
@@ -288,7 +304,7 @@ export function useBatchUpload(): UseBatchUploadReturn {
   /**
    * 업로드 큐 처리 (중복 검사 포함)
    */
-  const processQueue = useCallback(async (mappings: FolderMapping[]) => {
+  const processQueue = useCallback(async (mappings: UploadFolderMapping[]) => {
     // 새 세대 시작 — 이전 세대의 worker들은 자동 종료됨
     const currentGeneration = ++generationRef.current
     console.log(`[useBatchUpload] 새 세대 시작: gen=${currentGeneration}, 파일 수=${mappings.reduce((sum, m) => sum + (m.matched ? m.files.length : 0), 0)}`)
@@ -593,7 +609,7 @@ export function useBatchUpload(): UseBatchUploadReturn {
    * 업로드 시작
    */
   const startUpload = useCallback(
-    async (mappings: FolderMapping[]) => {
+    async (mappings: UploadFolderMapping[]) => {
       // 이전 작업이 진행 중이면 완전 정리
       // (페이지 이탈 후 복귀 시 좀비 worker 방지)
       console.log(`[useBatchUpload] startUpload 호출: 이전 세대=${generationRef.current} 정리 시작`)
