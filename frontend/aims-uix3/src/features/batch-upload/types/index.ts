@@ -182,3 +182,24 @@ export interface UploadProgress {
  * Phase 1: 개별 파일 크기 제한 없음 — 저장 용량 쿼터로 관리
  */
 export const FILE_SIZE_LIMITS = {} as const
+
+/**
+ * 폴더 분석 단계 (업로드 이전 단계)
+ * @since 2026-04-11
+ *
+ * - reading: 파일 시스템에서 파일 목록 읽는 중 (총계 미지수)
+ * - validating: 파일 검증 (확장자/MIME/크기)
+ * - matching: 폴더-고객 매칭
+ * - checking-storage: 스토리지 용량 체크
+ */
+export type BatchAnalyzeStage = 'reading' | 'validating' | 'matching' | 'checking-storage'
+
+/**
+ * 폴더 분석 진행률
+ * total이 null이면 총계 미지수 (reading 단계 초기)
+ */
+export interface BatchAnalyzeProgress {
+  stage: BatchAnalyzeStage
+  current: number
+  total: number | null
+}

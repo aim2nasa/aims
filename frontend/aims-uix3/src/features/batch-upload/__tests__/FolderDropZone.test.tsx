@@ -88,52 +88,85 @@ describe('FolderDropZone', () => {
     })
   })
 
-  describe('처리 중 표시', () => {
-    test('onFilesSelected 진행 중 스피너와 "폴더 분석 중..." 텍스트가 표시된다', async () => {
-      let resolveCallback: () => void
-      const onFilesSelected = vi.fn(() => new Promise<void>((resolve) => {
-        resolveCallback = resolve
-      }))
+  describe('처리 중 표시 (controlled analyzeProgress)', () => {
+    test('analyzeProgress가 reading이면 "파일 목록 읽는 중..." 텍스트와 카운트가 표시된다', () => {
+      const onFilesSelected = vi.fn()
+      const { container } = render(
+        <FolderDropZone
+          onFilesSelected={onFilesSelected}
+          analyzeProgress={{ stage: 'reading', current: 42, total: null }}
+        />
+      )
 
-      const { container } = render(<FolderDropZone onFilesSelected={onFilesSelected} />)
-
-      // input으로 파일 선택 시뮬레이션
-      const input = container.querySelector('input[type="file"]') as HTMLInputElement
-      const file = new File(['test'], 'test.pdf', { type: 'application/pdf' })
-      Object.defineProperty(input, 'files', { value: [file], writable: false })
-
-      await act(async () => {
-        fireEvent.change(input)
-        // microtask flush — setIsProcessing(true) 반영 대기
-        await new Promise(r => setTimeout(r, 0))
-      })
-
-      // 처리 중 UI 확인
-      expect(screen.getByText('폴더 분석 중...')).toBeInTheDocument()
+      expect(screen.getByText('파일 목록 읽는 중...')).toBeInTheDocument()
+      expect(screen.getByText('42개')).toBeInTheDocument()
       expect(container.querySelector('.folder-processing-spinner')).toBeInTheDocument()
       expect(screen.queryByText(/지금 바로 폴더를 끌어다 놓으세요/)).not.toBeInTheDocument()
-
-      // 처리 완료
-      await act(async () => {
-        resolveCallback!()
-      })
-
-      // 원래 UI 복원
-      expect(screen.getByText(/지금 바로 폴더를 끌어다 놓으세요/)).toBeInTheDocument()
-      expect(screen.queryByText('폴더 분석 중...')).not.toBeInTheDocument()
     })
 
-    test('처리 중 file input이 비활성화된다', async () => {
-      let resolveCallback: () => void
-      const onFilesSelected = vi.fn(() => new Promise<void>((resolve) => {
-        resolveCallback = resolve
-      }))
+    test('analyzeProgress가 validating이면 "파일 검증 중... current / total" 형식', () => {
+      const onFilesSelected = vi.fn()
+      render(
+        <FolderDropZone
+          onFilesSelected={onFilesSelected}
+          analyzeProgress={{ stage: 'validating', current: 100, total: 500 }}
+        />
+      )
 
-      const { container } = render(<FolderDropZone onFilesSelected={onFilesSelected} />)
+      expect(screen.getByText('파일 검증 중...')).toBeInTheDocument()
+      expect(screen.getByText('100 / 500')).toBeInTheDocument()
+    })
+
+    test('analyzeProgress가 matching이면 "고객 매칭 중... N / M 폴더"', () => {
+      const onFilesSelected = vi.fn()
+      render(
+        <FolderDropZone
+          onFilesSelected={onFilesSelected}
+          analyzeProgress={{ stage: 'matching', current: 3, total: 8 }}
+        />
+      )
+
+      expect(screen.getByText('고객 매칭 중...')).toBeInTheDocument()
+      expect(screen.getByText('3 / 8 폴더')).toBeInTheDocument()
+    })
+
+    test('analyzeProgress가 checking-storage이면 "용량 확인 중..."', () => {
+      const onFilesSelected = vi.fn()
+      render(
+        <FolderDropZone
+          onFilesSelected={onFilesSelected}
+          analyzeProgress={{ stage: 'checking-storage', current: 0, total: null }}
+        />
+      )
+
+      expect(screen.getByText('용량 확인 중...')).toBeInTheDocument()
+    })
+
+    test('analyzeProgress가 null이면 기본 드롭존 UI 복귀', () => {
+      const onFilesSelected = vi.fn()
+      const { container } = render(
+        <FolderDropZone
+          onFilesSelected={onFilesSelected}
+          analyzeProgress={null}
+        />
+      )
+
+      expect(screen.getByText(/지금 바로 폴더를 끌어다 놓으세요/)).toBeInTheDocument()
+      expect(container.querySelector('.folder-processing-spinner')).not.toBeInTheDocument()
+    })
+
+    test('onAnalyzeProgress 콜백이 reading 단계에서 호출된다 (webkitdirectory 경로)', async () => {
+      const onFilesSelected = vi.fn().mockResolvedValue(undefined)
+      const onAnalyzeProgress = vi.fn()
+
+      const { container } = render(
+        <FolderDropZone
+          onFilesSelected={onFilesSelected}
+          onAnalyzeProgress={onAnalyzeProgress}
+        />
+      )
 
       const input = container.querySelector('input[type="file"]') as HTMLInputElement
-      expect(input.disabled).toBe(false)
-
       const file = new File(['test'], 'test.pdf', { type: 'application/pdf' })
       Object.defineProperty(input, 'files', { value: [file], writable: false })
 
@@ -142,13 +175,10 @@ describe('FolderDropZone', () => {
         await new Promise(r => setTimeout(r, 0))
       })
 
-      expect(input.disabled).toBe(true)
-
-      await act(async () => {
-        resolveCallback!()
-      })
-
-      expect(input.disabled).toBe(false)
+      // reading 단계 보고 확인
+      expect(onAnalyzeProgress).toHaveBeenCalledWith(
+        expect.objectContaining({ stage: 'reading', current: 1 })
+      )
     })
   })
 
