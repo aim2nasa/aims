@@ -285,3 +285,90 @@ class TestMigrationConvertContract:
         new_contract, changed = mod.convert_contract(raw)
         assert changed is False
         assert new_contract == raw
+
+
+# ─────────────────────────────────────────────────────────────
+# 5) 재파싱 스크립트 (이슈 #62) fast-skip 필터
+# ─────────────────────────────────────────────────────────────
+class TestReparseScriptFastSkip:
+    def _load_reparse_module(self):
+        import importlib.util
+
+        script_path = _AR_ROOT / "scripts" / "reparse_ar_contracts_62.py"
+        spec = importlib.util.spec_from_file_location(
+            "reparse_ar_contracts_62", script_path
+        )
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_ar_has_missing_fields_detects_missing_status(self):
+        mod = self._load_reparse_module()
+        ar = {
+            "contracts": [
+                {
+                    "contract_number": "POL-1",
+                    "coverage_amount": 1000,
+                    "insurance_period": "종신",
+                    "premium_payment_period": "20년",
+                    # status 누락
+                }
+            ]
+        }
+        assert mod.ar_has_missing_fields(ar) is True
+
+    def test_ar_has_missing_fields_detects_missing_coverage(self):
+        mod = self._load_reparse_module()
+        ar = {
+            "contracts": [
+                {
+                    "contract_number": "POL-1",
+                    "status": "정상",
+                    "insurance_period": "종신",
+                    "premium_payment_period": "20년",
+                    # coverage_amount 누락
+                }
+            ]
+        }
+        assert mod.ar_has_missing_fields(ar) is True
+
+    def test_ar_has_missing_fields_false_when_all_present(self):
+        mod = self._load_reparse_module()
+        ar = {
+            "contracts": [
+                {
+                    "contract_number": "POL-1",
+                    "status": "정상",
+                    "coverage_amount": 1000,
+                    "insurance_period": "종신",
+                    "premium_payment_period": "20년",
+                }
+            ],
+            "lapsed_contracts": [],
+        }
+        assert mod.ar_has_missing_fields(ar) is False
+
+    def test_ar_has_missing_fields_checks_lapsed_too(self):
+        mod = self._load_reparse_module()
+        ar = {
+            "contracts": [
+                {
+                    "contract_number": "POL-1",
+                    "status": "정상",
+                    "coverage_amount": 1000,
+                    "insurance_period": "종신",
+                    "premium_payment_period": "20년",
+                }
+            ],
+            "lapsed_contracts": [
+                {
+                    "contract_number": "POL-L",
+                    # status 누락
+                    "coverage_amount": 500,
+                    "insurance_period": "10년",
+                    "premium_payment_period": "10년",
+                }
+            ],
+        }
+        assert mod.ar_has_missing_fields(ar) is True
