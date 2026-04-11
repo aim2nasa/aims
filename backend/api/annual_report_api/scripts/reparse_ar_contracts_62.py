@@ -77,6 +77,32 @@ def _is_missing(value: Any) -> bool:
     return False
 
 
+# 누락 판정에 사용할 핵심 필드 — 이슈 #62 에서 관찰된 Upstage 누락 필드
+CRITICAL_FIELDS = (
+    "status",
+    "coverage_amount",
+    "insurance_period",
+    "premium_payment_period",
+)
+
+
+def ar_has_missing_fields(ar_dict: Dict[str, Any]) -> bool:
+    """annual_report 내 contracts 중 하나라도 CRITICAL_FIELDS 가 누락된 경우 True."""
+    for c in (ar_dict.get("contracts") or []):
+        if not isinstance(c, dict):
+            continue
+        for key in CRITICAL_FIELDS:
+            if _is_missing(c.get(key)):
+                return True
+    for c in (ar_dict.get("lapsed_contracts") or []):
+        if not isinstance(c, dict):
+            continue
+        for key in CRITICAL_FIELDS:
+            if _is_missing(c.get(key)):
+                return True
+    return False
+
+
 def reparse_single_ar(
     db,
     files_coll,
@@ -190,6 +216,7 @@ def main() -> int:
         "customers_scanned": 0,
         "customers_updated": 0,
         "reports_scanned": 0,
+        "reports_skipped_complete": 0,
         "reports_updated": 0,
         "contracts_augmented": 0,
     }
@@ -203,6 +230,13 @@ def main() -> int:
 
             for report in reports:
                 stats["reports_scanned"] += 1
+
+                # 빠른 필터: CRITICAL_FIELDS 가 모두 채워져 있으면 재파싱 스킵
+                if not ar_has_missing_fields(report):
+                    stats["reports_skipped_complete"] += 1
+                    new_reports.append(dict(report))
+                    continue
+
                 new_report = dict(report)
                 augmented = reparse_single_ar(db, files_coll, new_report)
                 if augmented is not None:
