@@ -1,338 +1,441 @@
 /**
- * 고객명 매칭 유틸리티 테스트
- * @since 2025-12-05
+ * 폴더 트리 + 3상태 매핑 계산 테스트
+ * @since 2026-04-11
+ * @version 4.0.0 (재설계 — 명시적 인식 기반 / 3상태 / 공존 금지 불변식)
  */
 
 import { describe, test, expect } from 'vitest'
 import {
-  normalizeName,
-  matchFolderToCustomer,
-  matchFoldersToCustomers,
-  calculateMatchingStats,
-  groupFilesByFolder,
-  createFolderMappings,
+  buildFolderTree,
+  computeFolderMappings,
+  canDirectMap,
+  releaseDirectMapping,
+  flattenTree,
   type CustomerForMatching,
 } from '../customerMatcher'
 
-/**
- * 테스트용 고객 데이터
- */
+/** 테스트용 고객 데이터 */
 const mockCustomers: CustomerForMatching[] = [
   { _id: 'c1', personal_info: { name: '홍길동' } },
   { _id: 'c2', personal_info: { name: '김철수' } },
-  { _id: 'c3', personal_info: { name: '이영희' } },
-  { _id: 'c4', personal_info: { name: '박민수' } },
-  { _id: 'c5', personal_info: { name: '  최지영  ' } }, // 공백 포함
+  { _id: 'c3', personal_info: { name: '한울컨설팅' } },
 ]
 
-/**
- * 테스트용 File 객체 생성 헬퍼 (webkitRelativePath 포함)
- */
-function createMockFileWithPath(relativePath: string, size = 1024): File {
+/** webkitRelativePath를 가진 File 헬퍼 */
+function mkFile(relativePath: string, size = 1024): File {
   const name = relativePath.split('/').pop() || 'file'
   const file = new File(['x'.repeat(size)], name, { type: 'application/octet-stream' })
-  Object.defineProperty(file, 'webkitRelativePath', {
-    value: relativePath,
-    writable: false,
-  })
+  Object.defineProperty(file, 'webkitRelativePath', { value: relativePath, writable: false })
   return file
 }
 
-describe('customerMatcher', () => {
-  describe('normalizeName', () => {
-    test('이름 양쪽 공백을 제거한다', () => {
-      expect(normalizeName('  홍길동  ')).toBe('홍길동')
-      expect(normalizeName('김철수')).toBe('김철수')
-    })
+describe('buildFolderTree', () => {
+  test('파일 배열을 계층 트리로 변환한다', () => {
+    const files = [
+      mkFile('한울/재무제표.pdf'),
+      mkFile('한울/하위A/파일1.pdf'),
+      mkFile('한울/하위A/파일2.pdf'),
+      mkFile('한울/하위B/파일3.pdf'),
+    ]
 
-    test('빈 문자열을 처리한다', () => {
-      expect(normalizeName('')).toBe('')
-      expect(normalizeName('   ')).toBe('')
-    })
+    const roots = buildFolderTree(files)
+
+    expect(roots).toHaveLength(1)
+    expect(roots[0].folderPath).toBe('한울')
+    expect(roots[0].folderName).toBe('한울')
+    expect(roots[0].parentFolderPath).toBeNull()
+    expect(roots[0].directFiles).toHaveLength(1) // 재무제표.pdf
+    expect(roots[0].children).toHaveLength(2)
+
+    const 하위A = roots[0].children.find(c => c.folderName === '하위A')
+    expect(하위A).toBeDefined()
+    expect(하위A?.directFiles).toHaveLength(2)
+    expect(하위A?.parentFolderPath).toBe('한울')
   })
 
-  describe('matchFolderToCustomer', () => {
-    test('정확히 일치하는 고객을 찾는다', () => {
-      const result = matchFolderToCustomer('홍길동', mockCustomers)
-      expect(result).not.toBeNull()
-      expect(result?._id).toBe('c1')
-      expect(result?.personal_info?.name).toBe('홍길동')
-    })
-
-    test('폴더명 공백은 트림 후 비교한다', () => {
-      const result = matchFolderToCustomer('  홍길동  ', mockCustomers)
-      expect(result).not.toBeNull()
-      expect(result?._id).toBe('c1')
-    })
-
-    test('고객명 공백도 트림 후 비교한다', () => {
-      // 고객 데이터에 공백이 있어도 매칭됨
-      const result = matchFolderToCustomer('최지영', mockCustomers)
-      expect(result).not.toBeNull()
-      expect(result?._id).toBe('c5')
-    })
-
-    test('부분 일치는 매칭하지 않는다', () => {
-      expect(matchFolderToCustomer('홍길', mockCustomers)).toBeNull()
-      expect(matchFolderToCustomer('길동', mockCustomers)).toBeNull()
-      expect(matchFolderToCustomer('홍길동님', mockCustomers)).toBeNull()
-    })
-
-    test('대소문자를 구분한다 (영문 이름의 경우)', () => {
-      const customersWithEnglish: CustomerForMatching[] = [
-        { _id: 'e1', personal_info: { name: 'John Smith' } },
-      ]
-      expect(matchFolderToCustomer('John Smith', customersWithEnglish)).not.toBeNull()
-      expect(matchFolderToCustomer('john smith', customersWithEnglish)).toBeNull()
-      expect(matchFolderToCustomer('JOHN SMITH', customersWithEnglish)).toBeNull()
-    })
-
-    test('일치하는 고객이 없으면 null을 반환한다', () => {
-      expect(matchFolderToCustomer('존재하지않는이름', mockCustomers)).toBeNull()
-    })
-
-    test('빈 폴더명은 null을 반환한다', () => {
-      expect(matchFolderToCustomer('', mockCustomers)).toBeNull()
-      expect(matchFolderToCustomer('   ', mockCustomers)).toBeNull()
-    })
-
-    test('고객 목록이 비어있으면 null을 반환한다', () => {
-      expect(matchFolderToCustomer('홍길동', [])).toBeNull()
-    })
-
-    test('personal_info가 없는 고객은 건너뛴다', () => {
-      const customersWithMissing: CustomerForMatching[] = [
-        { _id: 'x1' }, // personal_info 없음
-        { _id: 'x2', personal_info: {} }, // name 없음
-        { _id: 'c1', personal_info: { name: '홍길동' } },
-      ]
-      const result = matchFolderToCustomer('홍길동', customersWithMissing)
-      expect(result?._id).toBe('c1')
-    })
+  test('복수 루트 폴더를 처리한다', () => {
+    const files = [
+      mkFile('홍길동/보험증권.pdf'),
+      mkFile('김철수/계약서.docx'),
+    ]
+    const roots = buildFolderTree(files)
+    expect(roots).toHaveLength(2)
+    const names = roots.map(r => r.folderName).sort()
+    expect(names).toEqual(['김철수', '홍길동'])
   })
 
-  describe('matchFoldersToCustomers', () => {
-    test('여러 폴더를 한 번에 매칭한다', () => {
-      const folderNames = ['홍길동', '김철수', '존재하지않음']
-      const result = matchFoldersToCustomers(folderNames, mockCustomers)
-
-      expect(result.size).toBe(3)
-      expect(result.get('홍길동')?._id).toBe('c1')
-      expect(result.get('김철수')?._id).toBe('c2')
-      expect(result.get('존재하지않음')).toBeNull()
-    })
-
-    test('빈 폴더 배열은 빈 맵을 반환한다', () => {
-      const result = matchFoldersToCustomers([], mockCustomers)
-      expect(result.size).toBe(0)
-    })
+  test('webkitRelativePath 없는 파일은 스킵한다', () => {
+    const orphan = new File(['test'], 'orphan.pdf')
+    const files = [orphan, mkFile('한울/파일.pdf')]
+    const roots = buildFolderTree(files)
+    expect(roots).toHaveLength(1)
+    expect(roots[0].folderName).toBe('한울')
   })
 
-  describe('calculateMatchingStats', () => {
-    test('매칭 통계를 정확히 계산한다', () => {
-      const mappings = new Map<string, CustomerForMatching | null>([
-        ['홍길동', mockCustomers[0]],
-        ['김철수', mockCustomers[1]],
-        ['미매칭1', null],
-        ['미매칭2', null],
-      ])
-
-      const stats = calculateMatchingStats(mappings)
-
-      expect(stats.total).toBe(4)
-      expect(stats.matched).toBe(2)
-      expect(stats.unmatched).toBe(2)
-      expect(stats.matchRate).toBe(50)
-    })
-
-    test('모두 매칭되면 100%', () => {
-      const mappings = new Map<string, CustomerForMatching | null>([
-        ['홍길동', mockCustomers[0]],
-        ['김철수', mockCustomers[1]],
-      ])
-
-      const stats = calculateMatchingStats(mappings)
-      expect(stats.matchRate).toBe(100)
-    })
-
-    test('모두 미매칭이면 0%', () => {
-      const mappings = new Map<string, CustomerForMatching | null>([
-        ['미매칭1', null],
-        ['미매칭2', null],
-      ])
-
-      const stats = calculateMatchingStats(mappings)
-      expect(stats.matchRate).toBe(0)
-    })
-
-    test('빈 맵은 0%', () => {
-      const mappings = new Map<string, CustomerForMatching | null>()
-      const stats = calculateMatchingStats(mappings)
-      expect(stats.total).toBe(0)
-      expect(stats.matchRate).toBe(0)
-    })
+  test('빈 파일 배열은 빈 루트를 반환한다', () => {
+    expect(buildFolderTree([])).toEqual([])
   })
 
-  describe('groupFilesByFolder', () => {
-    // === Regression: 기존 동작 보존 ===
+  test('3레벨 이상의 깊은 계층도 처리한다', () => {
+    const files = [
+      mkFile('루트/레벨1/레벨2/파일.pdf'),
+    ]
+    const roots = buildFolderTree(files)
+    expect(roots).toHaveLength(1)
+    expect(roots[0].folderName).toBe('루트')
+    expect(roots[0].children[0].folderName).toBe('레벨1')
+    expect(roots[0].children[0].children[0].folderName).toBe('레벨2')
+    expect(roots[0].children[0].children[0].directFiles).toHaveLength(1)
+  })
+})
 
-    test('여러 최상위 폴더는 각각 그룹화한다 (AC#4)', () => {
-      const files = [
-        createMockFileWithPath('홍길동/보험증권.pdf'),
-        createMockFileWithPath('홍길동/청구서.pdf'),
-        createMockFileWithPath('김철수/계약서.docx'),
-        createMockFileWithPath('김철수/하위폴더/첨부.jpg'),
-      ]
+describe('computeFolderMappings', () => {
+  test('드롭 직후 모든 폴더는 unmapped 상태다 (자동 매칭 없음)', () => {
+    const files = [
+      mkFile('홍길동/a.pdf'),
+      mkFile('김철수/b.pdf'),
+    ]
+    const tree = buildFolderTree(files)
+    const mappings = computeFolderMappings(tree, new Map(), mockCustomers)
 
-      const result = groupFilesByFolder(files)
-
-      expect(result.parentFolderName).toBeNull()
-      expect(result.rootFiles).toHaveLength(0)
-      expect(result.groups.size).toBe(2)
-      expect(result.groups.get('홍길동')?.length).toBe(2)
-      expect(result.groups.get('김철수')?.length).toBe(2)
-    })
-
-    test('고객명과 일치하는 단일 폴더는 그대로 반환한다 (AC#3)', () => {
-      const files = [
-        createMockFileWithPath('홍길동/보험증권.pdf'),
-        createMockFileWithPath('홍길동/하위폴더/첨부.pdf'),
-      ]
-
-      const result = groupFilesByFolder(files, mockCustomers)
-
-      expect(result.parentFolderName).toBeNull()
-      expect(result.rootFiles).toHaveLength(0)
-      expect(result.groups.size).toBe(1)
-      expect(result.groups.get('홍길동')?.length).toBe(2)
-    })
-
-    test('webkitRelativePath가 없는 파일은 건너뛴다', () => {
-      const file = new File(['test'], 'orphan.pdf')
-      const result = groupFilesByFolder([file])
-      expect(result.groups.size).toBe(0)
-    })
-
-    test('빈 배열은 빈 결과를 반환한다', () => {
-      const result = groupFilesByFolder([])
-      expect(result.groups.size).toBe(0)
-      expect(result.parentFolderName).toBeNull()
-      expect(result.rootFiles).toHaveLength(0)
-    })
-
-    // === AC#1, AC#2: 루트 폴더 표시 + 루트 파일 보존 ===
-
-    test('미매칭 단일 폴더: parentFolderName을 반환하고 루트 파일을 보존한다 (AC#1, AC#2)', () => {
-      // "한울" 폴더 안에 루트 파일 + 하위 폴더
-      const files = [
-        createMockFileWithPath('한울/재무제표.pdf', 1000),
-        createMockFileWithPath('한울/사업자등록증.pdf', 2000),
-        createMockFileWithPath('한울/주주명부.xlsx', 500),
-        createMockFileWithPath('한울/하위폴더A/파일1.pdf', 3000),
-        createMockFileWithPath('한울/하위폴더A/파일2.pdf', 4000),
-        createMockFileWithPath('한울/하위폴더B/파일3.pdf', 5000),
-      ]
-
-      const result = groupFilesByFolder(files, mockCustomers)
-
-      // 부모 폴더 정보
-      expect(result.parentFolderName).toBe('한울')
-
-      // 루트 파일 보존 (기존에는 유실됨)
-      expect(result.rootFiles).toHaveLength(3)
-      expect(result.rootFiles.map(f => f.name).sort()).toEqual(
-        ['사업자등록증.pdf', '재무제표.pdf', '주주명부.xlsx'].sort()
-      )
-
-      // 하위 폴더 그룹화
-      expect(result.groups.size).toBe(2)
-      expect(result.groups.get('하위폴더A')?.length).toBe(2)
-      expect(result.groups.get('하위폴더B')?.length).toBe(1)
-    })
-
-    test('미매칭 단일 폴더: 하위 폴더 없이 루트 파일만 있는 경우', () => {
-      const files = [
-        createMockFileWithPath('한울/파일1.pdf'),
-        createMockFileWithPath('한울/파일2.pdf'),
-      ]
-
-      const result = groupFilesByFolder(files, mockCustomers)
-
-      // 하위 폴더 없으므로 기본 동작: 최상위 폴더 그룹 반환
-      expect(result.parentFolderName).toBeNull()
-      expect(result.groups.size).toBe(1)
-      expect(result.groups.get('한울')?.length).toBe(2)
-    })
-
-    test('미매칭 단일 폴더: 루트 파일 없이 하위 폴더만 있는 경우', () => {
-      const files = [
-        createMockFileWithPath('한울/하위A/파일1.pdf'),
-        createMockFileWithPath('한울/하위B/파일2.pdf'),
-      ]
-
-      const result = groupFilesByFolder(files, mockCustomers)
-
-      expect(result.parentFolderName).toBe('한울')
-      expect(result.rootFiles).toHaveLength(0)
-      expect(result.groups.size).toBe(2)
-    })
+    expect(mappings).toHaveLength(2)
+    for (const m of mappings) {
+      expect(m.state).toBe('unmapped')
+      expect(m.customerId).toBeNull()
+      expect(m.customerName).toBeNull()
+      expect(m.inheritedFromPath).toBeNull()
+    }
   })
 
-  describe('createFolderMappings', () => {
-    test('파일 그룹을 FolderMapping 배열로 변환한다', () => {
-      const fileGroups = new Map<string, File[]>([
-        ['홍길동', [createMockFileWithPath('홍길동/doc.pdf', 1000)]],
-        ['미매칭폴더', [createMockFileWithPath('미매칭폴더/file.pdf', 2000)]],
-      ])
+  test('direct 매핑 → 해당 폴더 state=direct + 자손 state=inherited', () => {
+    const files = [
+      mkFile('한울/재무.pdf'),
+      mkFile('한울/하위/파일1.pdf'),
+      mkFile('한울/하위/파일2.pdf'),
+    ]
+    const tree = buildFolderTree(files)
+    const directMap = new Map([['한울', 'c3']])
+    const mappings = computeFolderMappings(tree, directMap, mockCustomers)
 
-      const mappings = createFolderMappings(fileGroups, mockCustomers)
+    const 한울 = mappings.find(m => m.folderPath === '한울')
+    const 하위 = mappings.find(m => m.folderPath === '한울/하위')
 
-      expect(mappings.length).toBe(2)
+    expect(한울?.state).toBe('direct')
+    expect(한울?.customerId).toBe('c3')
+    expect(한울?.customerName).toBe('한울컨설팅')
+    expect(한울?.inheritedFromPath).toBeNull()
 
-      // 매칭된 폴더가 먼저
-      const matchedMapping = mappings.find(m => m.folderName === '홍길동')
-      expect(matchedMapping?.matched).toBe(true)
-      expect(matchedMapping?.customerId).toBe('c1')
-      expect(matchedMapping?.customerName).toBe('홍길동')
-      expect(matchedMapping?.fileCount).toBe(1)
-      expect(matchedMapping?.totalSize).toBe(1000)
+    expect(하위?.state).toBe('inherited')
+    expect(하위?.customerId).toBe('c3')
+    expect(하위?.customerName).toBe('한울컨설팅')
+    expect(하위?.inheritedFromPath).toBe('한울')
+  })
 
-      // 미매칭 폴더
-      const unmatchedMapping = mappings.find(m => m.folderName === '미매칭폴더')
-      expect(unmatchedMapping?.matched).toBe(false)
-      expect(unmatchedMapping?.customerId).toBeNull()
-      expect(unmatchedMapping?.customerName).toBeNull()
-    })
+  test('subtreeFiles는 direct 폴더 기준으로 자기 + 전체 하위를 포함한다', () => {
+    const files = [
+      mkFile('한울/재무.pdf', 100),
+      mkFile('한울/하위A/파일1.pdf', 200),
+      mkFile('한울/하위A/파일2.pdf', 300),
+      mkFile('한울/하위B/파일3.pdf', 400),
+    ]
+    const tree = buildFolderTree(files)
+    const mappings = computeFolderMappings(tree, new Map([['한울', 'c3']]), mockCustomers)
 
-    test('매칭된 폴더가 미매칭 폴더보다 먼저 정렬된다', () => {
-      const fileGroups = new Map<string, File[]>([
-        ['ㄱ미매칭', [createMockFileWithPath('ㄱ미매칭/a.pdf')]],
-        ['홍길동', [createMockFileWithPath('홍길동/b.pdf')]],
-        ['ㄴ미매칭', [createMockFileWithPath('ㄴ미매칭/c.pdf')]],
-      ])
+    const 한울 = mappings.find(m => m.folderPath === '한울')
+    expect(한울?.subtreeFileCount).toBe(4)
+    expect(한울?.subtreeTotalSize).toBe(1000)
+    expect(한울?.directFileCount).toBe(1) // 자기 직하만
+    expect(한울?.directTotalSize).toBe(100)
+  })
 
-      const mappings = createFolderMappings(fileGroups, mockCustomers)
+  test('상속 체인은 가장 가까운 direct 조상을 찾는다', () => {
+    const files = [
+      mkFile('A/B/C/D/파일.pdf'),
+    ]
+    const tree = buildFolderTree(files)
+    // B를 direct로 지정
+    const mappings = computeFolderMappings(tree, new Map([['A/B', 'c1']]), mockCustomers)
 
-      // 첫 번째는 매칭된 '홍길동'
-      expect(mappings[0].folderName).toBe('홍길동')
-      expect(mappings[0].matched).toBe(true)
+    const A = mappings.find(m => m.folderPath === 'A')
+    const AB = mappings.find(m => m.folderPath === 'A/B')
+    const ABC = mappings.find(m => m.folderPath === 'A/B/C')
+    const ABCD = mappings.find(m => m.folderPath === 'A/B/C/D')
 
-      // 나머지는 미매칭, 가나다 순
-      expect(mappings[1].folderName).toBe('ㄱ미매칭')
-      expect(mappings[2].folderName).toBe('ㄴ미매칭')
-    })
+    expect(A?.state).toBe('unmapped')
+    expect(AB?.state).toBe('direct')
+    expect(ABC?.state).toBe('inherited')
+    expect(ABC?.inheritedFromPath).toBe('A/B')
+    expect(ABCD?.state).toBe('inherited')
+    expect(ABCD?.inheritedFromPath).toBe('A/B')
+  })
 
-    test('totalSize를 정확히 계산한다', () => {
-      const fileGroups = new Map<string, File[]>([
-        ['홍길동', [
-          createMockFileWithPath('홍길동/a.pdf', 1000),
-          createMockFileWithPath('홍길동/b.pdf', 2000),
-          createMockFileWithPath('홍길동/c.pdf', 3000),
-        ]],
-      ])
+  test('direct 해제 시 하위 inherited도 unmapped로 돌아간다', () => {
+    const files = [
+      mkFile('한울/재무.pdf'),
+      mkFile('한울/하위/파일.pdf'),
+    ]
+    const tree = buildFolderTree(files)
 
-      const mappings = createFolderMappings(fileGroups, mockCustomers)
-      expect(mappings[0].totalSize).toBe(6000)
-    })
+    // 1차: direct 매핑
+    const mapped = computeFolderMappings(tree, new Map([['한울', 'c3']]), mockCustomers)
+    expect(mapped.find(m => m.folderPath === '한울/하위')?.state).toBe('inherited')
+
+    // 2차: 해제
+    const released = computeFolderMappings(tree, new Map(), mockCustomers)
+    expect(released.find(m => m.folderPath === '한울')?.state).toBe('unmapped')
+    expect(released.find(m => m.folderPath === '한울/하위')?.state).toBe('unmapped')
+  })
+
+  test('알 수 없는 customerId는 customerName=null로 처리한다', () => {
+    const files = [mkFile('폴더/a.pdf')]
+    const tree = buildFolderTree(files)
+    const mappings = computeFolderMappings(tree, new Map([['폴더', 'unknown']]), mockCustomers)
+
+    const m = mappings[0]
+    expect(m.state).toBe('direct')
+    expect(m.customerId).toBe('unknown')
+    expect(m.customerName).toBeNull()
+  })
+})
+
+describe('canDirectMap (공존 금지 불변식 R3)', () => {
+  test('자식/자손에 direct가 없으면 허용', () => {
+    const result = canDirectMap('한울', new Map())
+    expect(result.ok).toBe(true)
+  })
+
+  test('자식에 direct가 있으면 거부 + 충돌 경로 반환', () => {
+    const directMap = new Map([['한울/하위A', 'c1']])
+    const result = canDirectMap('한울', directMap)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      const descendants = result.conflicts.filter(c => c.type === 'descendant')
+      expect(descendants.map(c => c.path)).toContain('한울/하위A')
+    }
+  })
+
+  test('손자 (3단계 아래)에 direct가 있어도 거부', () => {
+    const directMap = new Map([['A/B/C', 'c1']])
+    const result = canDirectMap('A', directMap)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      const descendants = result.conflicts.filter(c => c.type === 'descendant')
+      expect(descendants.map(c => c.path)).toContain('A/B/C')
+    }
+  })
+
+  test('형제 폴더(같은 레벨)는 충돌이 아니다', () => {
+    const directMap = new Map([['한울/하위A', 'c1']])
+    const result = canDirectMap('한울/하위B', directMap)
+    expect(result.ok).toBe(true)
+  })
+
+  test('prefix가 같지만 실제 자식이 아닌 폴더는 충돌이 아니다', () => {
+    // "한울"과 "한울테크"는 prefix만 비슷할 뿐 무관
+    const directMap = new Map([['한울테크/파일', 'c1']])
+    const result = canDirectMap('한울', directMap)
+    expect(result.ok).toBe(true)
+  })
+
+  test('자기 자신은 충돌로 간주하지 않는다', () => {
+    const directMap = new Map([['한울', 'c1']])
+    const result = canDirectMap('한울', directMap)
+    expect(result.ok).toBe(true)
+  })
+
+  // ==================== 조상 방향 검사 (신규) ====================
+
+  test('조상 direct 감지 — 부모가 이미 direct면 거부', () => {
+    const directMap = new Map([['한울', 'c3']])
+    const result = canDirectMap('한울/하위A', directMap)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      const ancestors = result.conflicts.filter(c => c.type === 'ancestor')
+      expect(ancestors).toHaveLength(1)
+      expect(ancestors[0].path).toBe('한울')
+      expect(ancestors[0].customerId).toBe('c3')
+    }
+  })
+
+  test('조상 direct 감지 — 3단계 위 조상이 direct면 거부', () => {
+    const directMap = new Map([['A', 'c1']])
+    const result = canDirectMap('A/B/C/D', directMap)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      const ancestors = result.conflicts.filter(c => c.type === 'ancestor')
+      expect(ancestors.map(a => a.path)).toContain('A')
+      expect(ancestors.find(a => a.path === 'A')?.customerId).toBe('c1')
+    }
+  })
+
+  test('조상 + 자손 동시 충돌 — 두 방향 모두 반환', () => {
+    // 비정상 상태지만 방어적으로 두 방향 다 탐지
+    const directMap = new Map([
+      ['A', 'c1'],           // 조상
+      ['A/B/C', 'c2'],       // 자손
+    ])
+    const result = canDirectMap('A/B', directMap)
+
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      const ancestors = result.conflicts.filter(c => c.type === 'ancestor')
+      const descendants = result.conflicts.filter(c => c.type === 'descendant')
+      expect(ancestors.map(a => a.path)).toContain('A')
+      expect(descendants.map(d => d.path)).toContain('A/B/C')
+    }
+  })
+
+  test('루트 폴더는 조상 검사 대상이 없다', () => {
+    // 루트 폴더("한울")는 parts.length=1이라 조상 루프 스킵
+    const directMap = new Map([['다른폴더', 'c1']])
+    const result = canDirectMap('한울', directMap)
+    expect(result.ok).toBe(true)
+  })
+})
+
+describe('releaseDirectMapping', () => {
+  test('대상 폴더의 direct 매핑을 제거한다', () => {
+    const directMap = new Map([
+      ['한울', 'c3'],
+      ['홍길동', 'c1'],
+    ])
+    const next = releaseDirectMapping('한울', directMap)
+
+    expect(next.has('한울')).toBe(false)
+    expect(next.has('홍길동')).toBe(true)
+    // 원본 불변
+    expect(directMap.has('한울')).toBe(true)
+  })
+
+  test('존재하지 않는 경로는 변화 없음', () => {
+    const directMap = new Map([['한울', 'c3']])
+    const next = releaseDirectMapping('존재안함', directMap)
+    expect(next.size).toBe(1)
+    expect(next.get('한울')).toBe('c3')
+  })
+})
+
+describe('불변식: 루트→리프 경로상 direct는 최대 1개', () => {
+  test('부모가 direct일 때 자식의 direct 지정은 조상 가드로 차단된다', () => {
+    // 한울(direct=c3) 상태에서 "한울/하위"를 direct로 지정하려 하면
+    // canDirectMap은 조상 방향 검사로 '한울'을 ancestor 충돌로 보고해야 함
+    const directMap = new Map([['한울', 'c3']])
+    const canMapChild = canDirectMap('한울/하위', directMap)
+
+    expect(canMapChild.ok).toBe(false)
+    if (!canMapChild.ok) {
+      const ancestors = canMapChild.conflicts.filter(c => c.type === 'ancestor')
+      expect(ancestors).toHaveLength(1)
+      expect(ancestors[0].path).toBe('한울')
+      expect(ancestors[0].customerId).toBe('c3')
+    }
+  })
+
+  test('부모와 자식 동시 direct 비정상 상태는 양방향 가드로 예방된다', () => {
+    // 부모=한울(direct), 자식=하위A(direct 시도)는 조상 가드로 차단됨
+    const files = [mkFile('한울/하위A/파일.pdf')]
+    const tree = buildFolderTree(files)
+
+    // 부모+자식 동시 direct를 강제로 주입한 비정상 상태
+    const abnormal = new Map([
+      ['한울', 'c3'],
+      ['한울/하위A', 'c1'],
+    ])
+    const mappings = computeFolderMappings(tree, abnormal, mockCustomers)
+
+    const 한울 = mappings.find(m => m.folderPath === '한울')
+    const 하위A = mappings.find(m => m.folderPath === '한울/하위A')
+
+    expect(한울?.state).toBe('direct')
+    expect(하위A?.state).toBe('direct') // 자기 direct가 이김 (상속보다 우선)
+
+    // 이 비정상 상태는 양방향 가드로 예방:
+    // - '한울'을 direct로 만들 때는 자손('한울/하위A')이 충돌
+    // - '한울/하위A'를 direct로 만들 때는 조상('한울')이 충돌
+    const guardParent = canDirectMap('한울', abnormal)
+    expect(guardParent.ok).toBe(false)
+
+    const guardChild = canDirectMap('한울/하위A', abnormal)
+    expect(guardChild.ok).toBe(false)
+    if (!guardChild.ok) {
+      const ancestors = guardChild.conflicts.filter(c => c.type === 'ancestor')
+      expect(ancestors.map(a => a.path)).toContain('한울')
+    }
+  })
+})
+
+// ==================== handleMappingChange 가드 동작 (BatchDocumentUploadView 연계) ====================
+
+describe('handleMappingChange 가드 — canDirectMap 위반 시 상태 변경 거부', () => {
+  /**
+   * BatchDocumentUploadView.handleMappingChange 내부 로직 재현:
+   * - customer !== null일 때 canDirectMap 통과해야만 directMap 갱신
+   * - 위반 시 prev를 그대로 반환 (상태 불변)
+   */
+  function simulateHandleMappingChange(
+    folderPath: string,
+    customerId: string | null,
+    prev: Map<string, string>
+  ): Map<string, string> {
+    const next = new Map(prev)
+    if (customerId) {
+      const guard = canDirectMap(folderPath, prev)
+      if (!guard.ok) return prev
+      next.set(folderPath, customerId)
+    } else {
+      next.delete(folderPath)
+    }
+    return next
+  }
+
+  test('조상이 direct인 경로에 프로그래매틱 direct 지정 시 무시됨', () => {
+    const prev = new Map([['한울', 'c3']])
+    const after = simulateHandleMappingChange('한울/하위', 'c1', prev)
+
+    // prev 그대로 반환 (상태 불변)
+    expect(after).toBe(prev)
+    expect(after.has('한울/하위')).toBe(false)
+    expect(after.get('한울')).toBe('c3')
+  })
+
+  test('자손이 direct인 경로에 프로그래매틱 direct 지정 시 무시됨', () => {
+    const prev = new Map([['한울/하위A', 'c1']])
+    const after = simulateHandleMappingChange('한울', 'c3', prev)
+
+    expect(after).toBe(prev)
+    expect(after.has('한울')).toBe(false)
+  })
+
+  test('정상 경로 지정은 통과', () => {
+    const prev = new Map<string, string>()
+    const after = simulateHandleMappingChange('홍길동', 'c1', prev)
+
+    expect(after).not.toBe(prev)
+    expect(after.get('홍길동')).toBe('c1')
+  })
+
+  test('해제(customer=null)는 가드와 무관하게 통과', () => {
+    const prev = new Map([['한울', 'c3']])
+    const after = simulateHandleMappingChange('한울', null, prev)
+
+    expect(after.has('한울')).toBe(false)
+  })
+})
+
+describe('flattenTree', () => {
+  test('DFS pre-order로 평탄화한다', () => {
+    const files = [
+      mkFile('A/a.pdf'),
+      mkFile('A/B/b.pdf'),
+      mkFile('A/C/c.pdf'),
+    ]
+    const roots = buildFolderTree(files)
+    const flat = flattenTree(roots)
+    const paths = flat.map(n => n.folderPath)
+    expect(paths).toEqual(['A', 'A/B', 'A/C'])
   })
 })

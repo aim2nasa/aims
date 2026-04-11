@@ -10,10 +10,11 @@
  * - sessionStorage 상태 저장 (새로고침 시 복원)
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { CenterPaneView } from '../../components/CenterPaneView/CenterPaneView'
 import { SFSymbol, SFSymbolSize, SFSymbolWeight } from '../../components/SFSymbol'
 import { Modal, Tooltip } from '@/shared/ui'
+import Button from '@/shared/ui/Button'
 import FolderDropZone from './components/FolderDropZone'
 import MappingPreview from './components/MappingPreview'
 import UploadProgress from './components/UploadProgress'
@@ -22,7 +23,7 @@ import DuplicateDialog, { type DuplicateFile } from './components/DuplicateDialo
 import StorageExceededDialog from './components/StorageExceededDialog'
 import { useBatchUpload } from './hooks/useBatchUpload'
 import { BatchUploadApi } from './api/batchUploadApi'
-import { groupFilesByFolder, createFolderMappings, type CustomerForMatching } from './utils/customerMatcher'
+import { buildFolderTree, computeFolderMappings, canDirectMap, type CustomerForMatching } from './utils/customerMatcher'
 import { validateBatch } from './utils/fileValidation'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
 import { checkStorageWithInfo } from '@/shared/lib/fileValidation'
@@ -46,14 +47,16 @@ interface SerializedFileInfo {
 
 /**
  * sessionStorage에 저장할 상태 (File 객체 제외)
+ * v4 재설계: 전체 파일 메타데이터 + direct 매핑 Map만 저장 → 복원 시 트리 재계산
  */
 interface SerializedState {
   step: 'select' | 'preview' | 'upload' | 'complete'
   customers: CustomerForMatching[]
-  folderMappingsMetadata: Array<Omit<FolderMapping, 'files'> & { serializedFiles: SerializedFileInfo[] }>
-  expandedPaths: string[]  // 펼쳐진 폴더 경로들
-  parentFolderName?: string | null
-  parentRootFiles?: SerializedFileInfo[]
+  /** 드롭된 전체 파일 메타데이터 */
+  allFiles: SerializedFileInfo[]
+  /** folderPath → customerId 사용자 명시 매핑 */
+  directMappingEntries: Array<[string, string]>
+  expandedPaths: string[]
   savedAt: string
 }
 
@@ -63,36 +66,22 @@ interface SerializedState {
 function saveToSessionStorage(
   step: SerializedState['step'],
   customers: CustomerForMatching[],
-  folderMappings: FolderMapping[],
-  expandedPaths: string[],
-  parentFolderName?: string | null,
-  parentRootFiles?: File[]
+  allFiles: File[],
+  directMap: Map<string, string>,
+  expandedPaths: string[]
 ): void {
   try {
     const state: SerializedState = {
       step,
       customers,
-      folderMappingsMetadata: folderMappings.map(m => ({
-        folderName: m.folderName,
-        customerId: m.customerId,
-        customerName: m.customerName,
-        matched: m.matched,
-        fileCount: m.fileCount,
-        totalSize: m.totalSize,
-        serializedFiles: m.files.map(f => ({
-          name: f.name,
-          size: f.size,
-          webkitRelativePath: (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name
-        }))
-      })),
-      expandedPaths,
-      parentFolderName: parentFolderName ?? null,
-      parentRootFiles: parentRootFiles?.map(f => ({
+      allFiles: allFiles.map(f => ({
         name: f.name,
         size: f.size,
-        webkitRelativePath: (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name
-      })) ?? [],
-      savedAt: new Date().toISOString()
+        webkitRelativePath: (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name,
+      })),
+      directMappingEntries: Array.from(directMap.entries()),
+      expandedPaths,
+      savedAt: new Date().toISOString(),
     }
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(state))
   } catch (e) {
@@ -149,16 +138,29 @@ export default function BatchDocumentUploadView({
   onViewDocuments
 }: BatchDocumentUploadViewProps) {
   const [step, setStep] = useState<'select' | 'preview' | 'upload' | 'complete'>('select')
-  const [folderMappings, setFolderMappings] = useState<FolderMapping[]>([])
+  // v4: 드롭된 전체 파일 (Source of Truth)
+  const [allFiles, setAllFiles] = useState<File[]>([])
+  // v4: 사용자가 명시한 folderPath → customerId 매핑 (Source of Truth)
+  const [directMap, setDirectMap] = useState<Map<string, string>>(new Map())
+  // v4: sessionStorage 복원 플래그 (실제 파일 내용 없음)
+  const [isPlaceholder, setIsPlaceholder] = useState(false)
+
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const [customers, setCustomers] = useState<CustomerForMatching[]>([])
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(false)
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
   const isInitializedRef = useRef(false)
 
-  // 부모 폴더 정보 (재그룹화 시 원본 부모 폴더명 + 루트 파일)
-  const [parentFolderName, setParentFolderName] = useState<string | null>(null)
-  const [parentRootFiles, setParentRootFiles] = useState<File[]>([])
+  // 파일 트리 (derived) — allFiles에서 파생
+  const folderTree = useMemo(() => buildFolderTree(allFiles), [allFiles])
+
+  // 폴더 매핑 배열 (derived) — 트리 + directMap + customers
+  const folderMappings = useMemo<FolderMapping[]>(() => {
+    if (allFiles.length === 0) return []
+    const mappings = computeFolderMappings(folderTree, directMap, customers)
+    // placeholder 플래그 전파
+    return isPlaceholder ? mappings.map(m => ({ ...m, isPlaceholder: true })) : mappings
+  }, [allFiles.length, folderTree, directMap, customers, isPlaceholder])
 
   // 🍎 도움말 모달 상태
   const [helpModalVisible, setHelpModalVisible] = useState(false)
@@ -177,7 +179,6 @@ export default function BatchDocumentUploadView({
   } | null>(null)
   // 용량 초과로 필터링 대기 중인 파일들
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
-  const [, setPendingMappings] = useState<FolderMapping[]>([])
 
   // 업로드 훅
   const {
@@ -201,33 +202,26 @@ export default function BatchDocumentUploadView({
     isInitializedRef.current = true
 
     const saved = loadFromSessionStorage()
-    if (saved && saved.step === 'preview') {
-      // 미리보기 상태 복원
+    // 구 스키마 방어: saved가 v4 이전 형식이거나 타입이 깨진 경우 전체 복원 스킵
+    if (
+      saved &&
+      saved.step === 'preview' &&
+      Array.isArray(saved.allFiles) &&
+      saved.allFiles.length > 0 &&
+      Array.isArray(saved.directMappingEntries) &&
+      Array.isArray(saved.customers) &&
+      Array.isArray(saved.expandedPaths)
+    ) {
+      // 미리보기 상태 복원 (placeholder — 실제 업로드 불가)
       setStep(saved.step)
       setCustomers(saved.customers)
       setExpandedPaths(new Set(saved.expandedPaths))
-
-      // 메타데이터로 FolderMapping 복원 (가짜 File 객체 사용)
-      // isPlaceholder: true - 실제 파일 내용이 없어 업로드 불가, 재선택 필요
-      const restoredMappings: FolderMapping[] = saved.folderMappingsMetadata.map(meta => ({
-        folderName: meta.folderName,
-        customerId: meta.customerId,
-        customerName: meta.customerName,
-        matched: meta.matched,
-        fileCount: meta.fileCount,
-        totalSize: meta.totalSize,
-        files: meta.serializedFiles.map(createPlaceholderFile),
-        isPlaceholder: true
-      }))
-      setFolderMappings(restoredMappings)
-
-      // 부모 폴더 정보 복원
-      if (saved.parentFolderName) {
-        setParentFolderName(saved.parentFolderName)
-      }
-      if (saved.parentRootFiles && saved.parentRootFiles.length > 0) {
-        setParentRootFiles(saved.parentRootFiles.map(createPlaceholderFile))
-      }
+      setAllFiles(saved.allFiles.map(createPlaceholderFile))
+      setDirectMap(new Map(saved.directMappingEntries))
+      setIsPlaceholder(true)
+    } else if (saved) {
+      // 구 스키마 감지 시 제거하여 다음 로드 시 깨끗한 상태 보장
+      clearSessionStorage()
     }
   }, [])
 
@@ -236,8 +230,8 @@ export default function BatchDocumentUploadView({
     if (!isInitializedRef.current) return
     if (step === 'upload') return // 업로드 중에는 저장하지 않음
 
-    saveToSessionStorage(step, customers, folderMappings, Array.from(expandedPaths), parentFolderName, parentRootFiles)
-  }, [step, customers, folderMappings, expandedPaths, parentFolderName, parentRootFiles])
+    saveToSessionStorage(step, customers, allFiles, directMap, Array.from(expandedPaths))
+  }, [step, customers, allFiles, directMap, expandedPaths])
 
   // 고객 목록 및 스토리지 정보 로드
   useEffect(() => {
@@ -320,145 +314,137 @@ export default function BatchDocumentUploadView({
     }
 
     try {
-    // 1. 파일을 폴더별로 그룹화 (고객명 확인을 위해 customers 전달)
-    const { groups: fileGroups, parentFolderName: detectedParentName, rootFiles } = groupFilesByFolder(files, customers)
+      // 🔵 validating 단계 시작
+      setAnalyzeProgress({ stage: 'validating', current: 0, total: files.length })
+      await new Promise<void>(resolve => setTimeout(resolve, 0))
+      const validation = validateBatch(files, tierLimit)
+      setAnalyzeProgress({ stage: 'validating', current: files.length, total: files.length })
 
-    if (fileGroups.size === 0) {
-      setValidationErrors(['폴더 구조가 없는 파일입니다. 폴더를 선택해주세요.'])
-      setAnalyzeProgress(null)
-      return
-    }
+      // 시스템/임시 파일과 기타 검증 실패를 분리
+      const systemFiles = validation.invalidFiles.filter(f => f.reason === 'system_file')
+      const otherInvalidFiles = validation.invalidFiles.filter(f => f.reason !== 'system_file')
 
-    // 2. 파일 검증 (tierLimit: -1이면 무제한)
-    // rootFiles도 포함하여 전체 파일 목록 구성
-    const allFiles = [...Array.from(fileGroups.values()).flat(), ...rootFiles]
-
-    // 🔵 validating 단계 시작
-    setAnalyzeProgress({ stage: 'validating', current: 0, total: allFiles.length })
-    // React flush를 위해 micro-task 양보 (사용자가 즉시 단계 변화를 볼 수 있도록)
-    await new Promise<void>(resolve => setTimeout(resolve, 0))
-    const validation = validateBatch(allFiles, tierLimit)
-    setAnalyzeProgress({ stage: 'validating', current: allFiles.length, total: allFiles.length })
-
-    // 시스템/임시 파일과 기타 검증 실패를 분리
-    const systemFiles = validation.invalidFiles.filter(f => f.reason === 'system_file')
-    const otherInvalidFiles = validation.invalidFiles.filter(f => f.reason !== 'system_file')
-
-    // 시스템 파일이 있으면 fileGroups에서도 제거
-    if (systemFiles.length > 0) {
+      // 시스템 파일 제거 후 유효 파일만 유지
       const systemFileSet = new Set(systemFiles.map(f => f.file))
-      for (const [folder, folderFiles] of fileGroups.entries()) {
-        const cleaned = folderFiles.filter(f => !systemFileSet.has(f))
-        if (cleaned.length === 0) {
-          fileGroups.delete(folder)
-        } else {
-          fileGroups.set(folder, cleaned)
+      const validFiles = files.filter(f => !systemFileSet.has(f))
+
+      const errors: string[] = []
+      if (systemFiles.length > 0) {
+        const officeTempCount = systemFiles.filter(f => f.file.name.startsWith('~$')).length
+        const osSystemCount = systemFiles.length - officeTempCount
+        if (officeTempCount > 0) {
+          errors.push(`편집 중 자동 생성된 파일 ${officeTempCount}개가 제외되었습니다`)
+        }
+        if (osSystemCount > 0) {
+          errors.push(`시스템 파일 ${osSystemCount}개가 제외되었습니다`)
         }
       }
-    }
-
-    const errors: string[] = []
-    if (systemFiles.length > 0) {
-      const officeTempCount = systemFiles.filter(f => f.file.name.startsWith('~$')).length
-      const osSystemCount = systemFiles.length - officeTempCount
-      if (officeTempCount > 0) {
-        errors.push(`편집 중 자동 생성된 파일 ${officeTempCount}개가 제외되었습니다`)
+      if (otherInvalidFiles.length > 0) {
+        errors.push(`${otherInvalidFiles.length}개 파일이 제외되었습니다 (크기 초과 또는 차단된 확장자)`)
       }
-      if (osSystemCount > 0) {
-        errors.push(`시스템 파일 ${osSystemCount}개가 제외되었습니다`)
+      if (validation.isBatchSizeExceeded) {
+        errors.push('배치 총 크기가 등급 한도를 초과했습니다')
       }
-    }
-    if (otherInvalidFiles.length > 0) {
-      errors.push(`${otherInvalidFiles.length}개 파일이 제외되었습니다 (크기 초과 또는 차단된 확장자)`)
-    }
-    if (validation.isBatchSizeExceeded) {
-      errors.push('배치 총 크기가 등급 한도를 초과했습니다')
-    }
-    setValidationErrors(errors)
+      setValidationErrors(errors)
 
-    // 3. 폴더-고객 매핑 생성
-    // 🔵 matching 단계 시작
-    setAnalyzeProgress({ stage: 'matching', current: 0, total: fileGroups.size })
-    await new Promise<void>(resolve => setTimeout(resolve, 0))
-    const mappings = createFolderMappings(fileGroups, customers)
-    setAnalyzeProgress({ stage: 'matching', current: fileGroups.size, total: fileGroups.size })
+      if (validFiles.length === 0) {
+        setValidationErrors([...errors, '업로드 가능한 파일이 없습니다.'])
+        setAnalyzeProgress(null)
+        return
+      }
 
-    // 4. 스토리지 용량 체크 (공통 모듈 사용)
-    // 🔵 checking-storage 단계 시작
-    setAnalyzeProgress({ stage: 'checking-storage', current: 0, total: null })
-    await new Promise<void>(resolve => setTimeout(resolve, 0))
-    // storageInfo는 이미 로드됨
-    const storageCheck = checkStorageWithInfo(allFiles, storageInfo)
+      // 🔵 matching 단계 (v4: 자동 매칭 없음 — 트리만 구축)
+      setAnalyzeProgress({ stage: 'matching', current: 0, total: validFiles.length })
+      await new Promise<void>(resolve => setTimeout(resolve, 0))
+      const previewTree = buildFolderTree(validFiles)
+      setAnalyzeProgress({ stage: 'matching', current: validFiles.length, total: validFiles.length })
 
-    // 용량 초과 시 다이얼로그 표시
-    if (!storageCheck.canUpload) {
-      console.log('[BatchUpload] Storage exceeded, showing dialog')
+      if (previewTree.length === 0) {
+        setValidationErrors([...errors, '폴더 구조가 없는 파일입니다. 폴더를 선택해주세요.'])
+        setAnalyzeProgress(null)
+        return
+      }
 
-      // 상태 저장 (나중에 일부만 업로드 시 사용)
-      setPendingFiles(allFiles)
-      setPendingMappings(mappings)
+      // 🔵 checking-storage 단계
+      setAnalyzeProgress({ stage: 'checking-storage', current: 0, total: null })
+      await new Promise<void>(resolve => setTimeout(resolve, 0))
+      const storageCheck = checkStorageWithInfo(validFiles, storageInfo)
 
-      setStorageExceededInfo({
-        selectedFilesSize: storageCheck.requestedBytes,
-        selectedFilesCount: allFiles.length,
-        partialUploadInfo: storageCheck.partialUploadInfo
-          ? { fileCount: storageCheck.partialUploadInfo.fileCount, totalSize: storageCheck.partialUploadInfo.totalSize }
-          : null
-      })
-      setShowStorageExceededDialog(true)
-      setAnalyzeProgress(null)
-      return // preview 단계로 이동하지 않음
-    }
+      if (!storageCheck.canUpload) {
+        console.log('[BatchUpload] Storage exceeded, showing dialog')
+        setPendingFiles(validFiles)
+        setStorageExceededInfo({
+          selectedFilesSize: storageCheck.requestedBytes,
+          selectedFilesCount: validFiles.length,
+          partialUploadInfo: storageCheck.partialUploadInfo
+            ? { fileCount: storageCheck.partialUploadInfo.fileCount, totalSize: storageCheck.partialUploadInfo.totalSize }
+            : null,
+        })
+        setShowStorageExceededDialog(true)
+        setAnalyzeProgress(null)
+        return
+      }
 
-    // 5. 정상 진행
-    setFolderMappings(mappings)
-    setParentFolderName(detectedParentName)
-    setParentRootFiles(rootFiles)
+      // 정상 진행: allFiles + directMap 초기화 후 preview 단계로 (모두 unmapped)
+      setAllFiles(validFiles)
+      setDirectMap(new Map())
+      setIsPlaceholder(false)
 
-    // 6. 기본 펼침 상태 설정
-    // 부모 폴더가 있으면 기본 펼침 (내용을 바로 볼 수 있도록)
-    setExpandedPaths(detectedParentName ? new Set([detectedParentName]) : new Set())
+      // 기본 펼침: 루트 폴더들만
+      const rootPaths = new Set(previewTree.map(n => n.folderPath))
+      setExpandedPaths(rootPaths)
 
-    // 7. 미리보기 단계로 이동
-    if (mappings.length > 0) {
       setStep('preview')
-    }
     } catch (err) {
       console.error('[BatchUpload] 분석 단계 오류:', err)
       setValidationErrors(['폴더 분석 중 오류가 발생했습니다. 다시 시도해주세요.'])
     } finally {
-      // 모든 경로에서 분석 진행률 해제 (드롭존 기본 UI로 복귀)
       setAnalyzeProgress(null)
     }
-  }, [tierLimit, customers, storageInfo])
+  }, [tierLimit, storageInfo])
 
-  // 수동 고객 매핑 변경 핸들러
-  const handleMappingChange = useCallback((folderName: string, customer: CustomerForMatching | null) => {
-    setFolderMappings(prev => prev.map(m => {
-      if (m.folderName !== folderName) return m
+  /**
+   * 고객 매핑 변경 핸들러 (folderPath 기준)
+   *
+   * - customer !== null: direct 매핑 설정. 불변식 위반 시 조용히 무시 (UI 가드 이중 방어)
+   * - customer === null: 해제 → directMap에서 키 삭제 → 하위 inherited 자동 풀림
+   *
+   * 불변식: 루트→리프 경로상 direct는 최대 1개 (자손·조상 방향 모두 검사)
+   */
+  const handleMappingChange = useCallback((folderPath: string, customer: CustomerForMatching | null) => {
+    setDirectMap(prev => {
+      const next = new Map(prev)
       if (customer) {
-        return { ...m, customerId: customer._id, customerName: customer.personal_info?.name || null, matched: true }
+        // 이중 방어: UI가 canDirectMap 가드를 통과시켰어도 프로그래매틱 호출 대비 재검증
+        const guard = canDirectMap(folderPath, prev)
+        if (!guard.ok) {
+          console.warn(
+            '[BatchUpload] handleMappingChange: canDirectMap 위반 — 매핑 무시',
+            { folderPath, conflicts: guard.conflicts }
+          )
+          return prev
+        }
+        next.set(folderPath, customer._id)
       } else {
-        // 매핑 해제
-        return { ...m, customerId: null, customerName: null, matched: false }
+        next.delete(folderPath)
       }
-    }))
+      return next
+    })
   }, [])
 
   const handleBack = useCallback(() => {
     setStep('select')
-    setFolderMappings([])
+    setAllFiles([])
+    setDirectMap(new Map())
+    setIsPlaceholder(false)
     setValidationErrors([])
     setExpandedPaths(new Set())
-    setParentFolderName(null)
-    setParentRootFiles([])
   }, [])
 
   // 스토리지 초과 다이얼로그: "기존 파일 정리" 클릭
   const handleCleanupFiles = useCallback(() => {
     setShowStorageExceededDialog(false)
     setPendingFiles([])
-    setPendingMappings([])
     // 일괄등록 뷰 닫기
     onClose()
     // 전체 문서 보기로 이동
@@ -474,52 +460,64 @@ export default function BatchDocumentUploadView({
   const handlePartialUpload = useCallback(() => {
     if (!storageInfo || !pendingFiles.length) return
 
-    // 용량 내 파일만 필터링
     const filteredFiles = filterMappingsToFitStorage(pendingFiles, storageInfo.remaining_bytes)
 
     if (filteredFiles.length === 0) {
       setShowStorageExceededDialog(false)
       setPendingFiles([])
-      setPendingMappings([])
       return
     }
 
-    // 필터링된 파일로 새 mappings 생성 (고객명 확인을 위해 customers 전달)
-    const { groups: filteredGroups, parentFolderName: filteredParentName, rootFiles: filteredRootFiles } = groupFilesByFolder(filteredFiles, customers)
-    const mappings = createFolderMappings(filteredGroups, customers)
+    setAllFiles(filteredFiles)
+    setDirectMap(new Map())
+    setIsPlaceholder(false)
 
-    setFolderMappings(mappings)
-    setParentFolderName(filteredParentName)
-    setParentRootFiles(filteredRootFiles)
-    setExpandedPaths(new Set(filteredParentName ? [filteredParentName, ...mappings.map(m => m.folderName)] : mappings.map(m => m.folderName)))
+    const previewTree = buildFolderTree(filteredFiles)
+    setExpandedPaths(new Set(previewTree.map(n => n.folderPath)))
+
     setShowStorageExceededDialog(false)
     setPendingFiles([])
-    setPendingMappings([])
 
-    if (mappings.length > 0) {
+    if (previewTree.length > 0) {
       setStep('preview')
     }
-  }, [storageInfo, pendingFiles, customers, filterMappingsToFitStorage])
+  }, [storageInfo, pendingFiles, filterMappingsToFitStorage])
 
   // 스토리지 초과 다이얼로그 닫기
   const handleStorageDialogClose = useCallback(() => {
     setShowStorageExceededDialog(false)
     setPendingFiles([])
-    setPendingMappings([])
   }, [])
 
-  const handleStartUpload = useCallback(async (selectedMappings: FolderMapping[]) => {
-    // 🔴 업로드 묶음 ID 설정 — 전체문서보기 프로그레스바에서 배치 진행률 추적용
+  /**
+   * 업로드 시작: direct 매핑 폴더들만 useBatchUpload가 기대하는 형식으로 어댑팅
+   *
+   * useBatchUpload는 { matched, customerId, files, folderName, customerName }를 사용하므로,
+   * v4 FolderMapping을 기존 형식으로 변환해 전달한다 (hook 변경 없이 호환).
+   */
+  const handleStartUpload = useCallback(async (directMappings: FolderMapping[]) => {
+    // 🔴 업로드 묶음 ID 설정
     const existingBatchId = getBatchId()
     const batchId = existingBatchId || `batch_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
     setBatchId(batchId)
 
-    // 🔴 업로드 예정 파일 수 등록 — 서버 total이 이 수에 도달하기 전까지 프로그레스바 cleanup 차단
-    const totalFiles = selectedMappings.reduce((sum, m) => sum + (m.matched ? m.files.length : 0), 0)
+    // useBatchUpload 호환 어댑터 (FolderMapping 구버전 필드 주입)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const legacyMappings: any[] = directMappings.map(m => ({
+      folderName: m.folderName,
+      customerId: m.customerId,
+      customerName: m.customerName,
+      matched: true,
+      files: m.subtreeFiles,
+      fileCount: m.subtreeFileCount,
+      totalSize: m.subtreeTotalSize,
+    }))
+
+    const totalFiles = legacyMappings.reduce((sum, m) => sum + m.files.length, 0)
     addBatchExpectedTotal(totalFiles)
 
     setStep('upload')
-    await startUpload(selectedMappings)
+    await startUpload(legacyMappings)
   }, [startUpload])
 
   const handleCancel = useCallback(() => {
@@ -527,14 +525,13 @@ export default function BatchDocumentUploadView({
   }, [cancelUpload])
 
   const handleComplete = useCallback(() => {
-    // 모든 상태 초기화
     resetUpload()
     setStep('select')
-    setFolderMappings([])
+    setAllFiles([])
+    setDirectMap(new Map())
+    setIsPlaceholder(false)
     setValidationErrors([])
     setExpandedPaths(new Set())
-    setParentFolderName(null)
-    setParentRootFiles([])
     clearSessionStorage()
   }, [resetUpload])
 
@@ -574,8 +571,6 @@ export default function BatchDocumentUploadView({
           <div className="batch-upload-content">
             <MappingPreview
               mappings={folderMappings}
-              parentFolderName={parentFolderName}
-              parentRootFiles={parentRootFiles}
               customers={customers}
               onMappingChange={handleMappingChange}
               onBack={handleBack}
@@ -659,19 +654,23 @@ export default function BatchDocumentUploadView({
       {/* 🍎 도움말 버튼 */}
       <div className="batch-upload-header">
         <Tooltip content="도움말" placement="bottom">
-          <button
+          <Button
             type="button"
-            className="help-icon-button"
+            variant="ghost"
+            size="sm"
             onClick={() => setHelpModalVisible(true)}
             aria-label="도움말"
+            leftIcon={
+              <SFSymbol
+                name="questionmark.circle"
+                size={SFSymbolSize.CAPTION_1}
+                weight={SFSymbolWeight.MEDIUM}
+                decorative={true}
+              />
+            }
           >
-            <SFSymbol
-              name="questionmark.circle"
-              size={SFSymbolSize.CAPTION_1}
-              weight={SFSymbolWeight.MEDIUM}
-              decorative={true}
-            />
-          </button>
+            <span className="visually-hidden">도움말</span>
+          </Button>
         </Tooltip>
       </div>
 
@@ -712,35 +711,35 @@ export default function BatchDocumentUploadView({
       >
         <div className="help-modal-content">
           <div className="help-modal-section">
-            <p><strong>📂 폴더 준비</strong></p>
+            <p><strong>📂 1단계 — 폴더 선택</strong></p>
             <ul>
-              <li>폴더명 = <strong>고객 이름</strong>으로 설정</li>
-              <li>예: "홍길동" 폴더 → 홍길동 고객에게 <strong>자동 연결</strong></li>
+              <li>폴더를 드래그앤드롭하거나 선택 버튼으로 불러옵니다</li>
+              <li>드롭 직후 모든 폴더는 <strong>미매핑 상태</strong>로 시작합니다 (자동 연결 없음)</li>
             </ul>
           </div>
 
           <div className="help-modal-section">
-            <p><strong>🔄 업로드 순서</strong></p>
+            <p><strong>👤 2단계 — 고객 명시적 지정</strong></p>
             <ul>
-              <li><strong>1</strong>: 폴더 드래그 또는 선택</li>
-              <li><strong>2</strong>: 폴더명-고객명 매칭 확인</li>
-              <li><strong>3</strong>: "업로드 시작" 클릭</li>
+              <li>각 폴더의 <strong>[고객 지정]</strong> 버튼을 눌러 고객을 직접 지정합니다</li>
+              <li>드롭다운에는 폴더명과 유사한 고객이 상단에 <strong>유사도 점수</strong>와 함께 추천됩니다</li>
             </ul>
           </div>
 
           <div className="help-modal-section">
-            <p><strong>⚠️ 매칭 실패 시</strong></p>
+            <p><strong>🔗 3단계 — 상속 규칙</strong></p>
             <ul>
-              <li><strong>✗ 표시</strong> 폴더: 드롭다운에서 고객 수동 선택</li>
-              <li>또는 폴더명을 고객명과 일치하게 수정</li>
+              <li>상위 폴더에 고객을 지정하면 <strong>하위 폴더는 자동으로 같은 고객에 상속</strong>됩니다 (📎 표시)</li>
+              <li><strong>하위 폴더가 먼저 지정되어 있으면 상위 폴더는 지정할 수 없습니다</strong> — 하위를 먼저 해제해야 합니다</li>
+              <li><strong>[해제]</strong> 버튼으로 언제든 즉시 미매핑 상태로 되돌릴 수 있습니다</li>
             </ul>
           </div>
 
           <div className="help-modal-section">
-            <p><strong>💡 팁</strong></p>
+            <p><strong>🚀 4단계 — 업로드</strong></p>
             <ul>
-              <li>중복 파일: <strong>덮어쓰기/건너뛰기</strong> 선택</li>
-              <li>업로드 중 <strong>일시정지/재개</strong> 가능</li>
+              <li>업로드 대상은 <strong>직접 지정된 폴더</strong>만 해당됩니다. 미매핑 폴더는 업로드되지 않습니다</li>
+              <li>중복 파일은 <strong>덮어쓰기/건너뛰기</strong>를 선택할 수 있고, 업로드 중 <strong>일시정지/재개</strong>도 가능합니다</li>
             </ul>
           </div>
         </div>

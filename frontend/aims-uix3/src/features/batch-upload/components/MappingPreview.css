@@ -1,7 +1,7 @@
 /**
  * MappingPreview Styles (Windows Explorer Tree)
  * @since 2025-12-05
- * @version 3.0.0
+ * @version 5.0.0 (2026-04-11 Dana UX 재설계 — 파란 버튼 바다 해소, direct 행 강조)
  */
 
 @layer components {
@@ -14,82 +14,48 @@
     min-height: 0; /* flexbox 스크롤 활성화 */
   }
 
-  /* 요약 통계 - iOS 스타일 */
-  .preview-stats {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-    padding: var(--spacing-md) var(--spacing-lg);
+  /* ==================== 상단 요약 (v5: 2줄 구조) ==================== */
+
+  .preview-summary {
+    padding: var(--spacing-sm) var(--spacing-md);
     background-color: var(--color-bg-secondary, #f9fafb);
     border-radius: var(--radius-md);
+    font-size: var(--font-size-caption-1);
+    color: var(--color-text-secondary);
     flex-shrink: 0;
+    line-height: 1.6;
   }
 
-  .stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0 var(--spacing-lg);
-    min-width: 70px;
+  /* 미매핑 0 + direct > 0 → 준비 완료 톤 (iOS green tint) */
+  .preview-summary[data-ready="true"] {
+    background-color: rgba(52, 199, 89, 0.06);
+  }
+  html[data-theme="dark"] .preview-summary[data-ready="true"] {
+    background-color: rgba(52, 199, 89, 0.12);
   }
 
-  .stat-value {
-    font-size: var(--font-size-subheadline);  /* 15px */
-    font-weight: 600;
+  .preview-summary strong {
     color: var(--color-text-primary);
-    line-height: 1.2;
+    font-weight: 600;
   }
 
-  .stat-value.matched {
-    color: var(--color-ios-green, #34c759);
-  }
-
-  .stat-value.unmatched {
+  /* 경고 보조 라인 — 상단 요약 1줄 뒤 줄바꿈으로 삽입 */
+  .preview-summary-warn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
     color: var(--color-ios-orange, #ff9500);
-  }
-
-  .stat-label {
-    font-size: var(--font-size-caption-2);
+    font-size: var(--font-size-caption-1);
     font-weight: 400;
-    color: var(--color-text-tertiary);
     margin-top: var(--spacing-0-5);
   }
 
-  .stat-divider {
-    width: 1px;
-    height: 24px;
-    background-color: var(--color-border, #e5e7eb);
-  }
-
-  /* 매칭 범례 설명 */
-  .preview-legend {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    font-size: var(--font-size-caption-2);
-    color: var(--color-text-tertiary);
+  .preview-summary-warn svg {
     flex-shrink: 0;
   }
 
-  .legend-item {
-    font-weight: 400;
-  }
+  /* ==================== 트리 헤더 ==================== */
 
-  .legend-item.matched {
-    color: var(--color-ios-green, #34c759);
-  }
-
-  .legend-item.unmatched {
-    color: var(--color-ios-orange, #ff9500);
-  }
-
-  .legend-divider {
-    color: var(--color-border, #e5e7eb);
-  }
-
-  /* 트리 헤더 */
   .tree-header {
     display: flex;
     justify-content: space-between;
@@ -97,7 +63,7 @@
     font-size: var(--font-size-caption-2);
     font-weight: 600;
     color: var(--color-text-secondary);
-    flex-shrink: 0; /* 크기 고정 */
+    flex-shrink: 0;
   }
 
   .tree-header-left {
@@ -106,69 +72,38 @@
     gap: var(--spacing-3);
   }
 
-  .select-all-btn {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border: none;
-    background: transparent;
-    color: var(--color-ios-blue, #007aff);
-    font-size: var(--font-size-caption-2);
-    font-weight: 400;
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-  }
+  /* ==================== 트리 컨테이너 ==================== */
 
-  .select-all-btn:hover {
-    background-color: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
-  }
-
-  .toggle-all-btn {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border: none;
-    background: transparent;
-    color: var(--color-ios-blue, #007aff);
-    font-size: var(--font-size-caption-2);
-    font-weight: 400;
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-  }
-
-  .toggle-all-btn:hover {
-    background-color: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
-  }
-
-  /* 트리 컨테이너 */
   .tree-container {
     flex: 1;
-    min-height: 0; /* flexbox 스크롤 활성화 */
+    min-height: 0;
     padding: var(--spacing-md);
     border: none;
     background-color: var(--color-bg-tertiary, #e8eaed);
     border-radius: var(--radius-md);
-    overflow: auto;  /* 수평/수직 모두 스크롤 가능 */
-    font-size: var(--font-size-caption-1);  /* FONT_SIZE_STANDARDS: 테이블 데이터 */
+    overflow: auto;
+    font-size: var(--font-size-caption-1);
     line-height: 1.3;
   }
 
-  /* 다크 테마 지원 */
   html[data-theme="dark"] .tree-container {
     background-color: var(--color-bg-tertiary, #1f2937);
   }
 
-  /* ==================== 트리 노드 - CSS 라인으로 연결 ==================== */
+  /* ==================== 트리 노드 구조 ==================== */
 
-  /* 트리 노드 */
   .tree-container .guide-node {
     position: relative;
-    padding-left: 20px;
+    padding-left: 20px;  /* F: 32 → 20 */
   }
 
   .tree-container .guide-node.root {
     padding-left: 0;
   }
 
-  /* 고객 하위 첫 번째 레벨 - 체크박스+토글+아이콘 위치에서 시작 */
+  /* 고객 하위 첫 번째 레벨: 들여쓰기 20px */
   .tree-container .guide-node.has-children > .guide-node {
-    margin-left: 32px;  /* 체크박스(18) + 토글(14) 공간 */
+    margin-left: 20px;  /* F: 32 → 20 */
   }
 
   /* 수직선 (부모에서 자식으로) */
@@ -185,29 +120,32 @@
   /* 마지막 노드는 수직선을 중간까지만 */
   .tree-container .guide-node.last::before {
     bottom: auto;
-    height: 12px;
+    height: 14px;
   }
 
-  /* 수평선 (아이콘으로 연결) */
+  /* 수평선 */
   .tree-container .guide-node:not(.root)::after {
     content: '';
     position: absolute;
     left: 6px;
-    top: 12px;
-    width: 12px;
+    top: 14px;
+    width: 10px;
     height: 1px;
     background-color: var(--color-border, #d1d5db);
   }
 
-  /* 노드 콘텐츠 */
+  /* ==================== 노드 콘텐츠 ==================== */
+
   .tree-container .guide-node-content {
     display: flex;
     align-items: center;
     gap: var(--spacing-1);
-    padding: var(--spacing-0-75) 0;
+    padding: var(--spacing-0-75) var(--spacing-1);
     white-space: nowrap;
     cursor: default;
-    border-radius: var(--radius-xs);
+    border-radius: 4px;
+    min-height: 28px;  /* F: reflow 방지 */
+    box-sizing: border-box;
   }
 
   .tree-container .guide-node-content.clickable,
@@ -220,61 +158,205 @@
     background-color: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
   }
 
-  /* 고객 루트 스타일 */
+  /* 고객 루트 기본 weight: 개별 상태에서 override */
   .tree-container .guide-node-content.customer-root {
+    font-weight: 400;
+  }
+
+  /* ==================== 3상태 스타일 ==================== */
+
+  /* ---------- direct: 주인공 강조 (좌측 컬러바 + 배경 + 컬러) ---------- */
+
+  .tree-container .guide-node-content.state-direct {
+    background-color: rgba(0, 122, 255, 0.04);
+    box-shadow: inset 3px 0 0 var(--color-ios-blue, #007aff);
+  }
+
+  html[data-theme="dark"] .tree-container .guide-node-content.state-direct {
+    background-color: rgba(0, 122, 255, 0.08);
+  }
+
+  .tree-container .guide-node-content.state-direct:hover {
+    background-color: rgba(0, 122, 255, 0.08);
+  }
+  html[data-theme="dark"] .tree-container .guide-node-content.state-direct:hover {
+    background-color: rgba(0, 122, 255, 0.14);
+  }
+
+  .tree-container .guide-node-content.state-direct .folder-label {
+    color: var(--color-text-primary);
     font-weight: 600;
   }
 
-  .tree-container .guide-node-content.customer-root.matched .guide-name {
-    color: var(--color-ios-green, #34c759);
+  .tree-container .state-separator {
+    margin: 0 var(--spacing-0-75);
+    color: var(--color-text-tertiary);
+    font-weight: 400;
   }
 
-  .tree-container .guide-node-content.customer-root.unmatched .guide-name {
-    color: var(--color-ios-orange, #ff9500);
+  .tree-container .state-customer-type-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-right: var(--spacing-0-5);
   }
 
-  /* 선택되지 않은 매칭 폴더 */
-  .tree-container .guide-node-content.customer-root.matched:not(.selected) .guide-name {
-    opacity: 0.5;
-  }
-
-  /* 체크박스 */
-  .tree-container .guide-checkbox {
-    margin-right: var(--spacing-1);
+  .tree-container .state-customer-name {
+    color: var(--color-ios-blue, #007aff);
+    font-weight: 600;
     cursor: pointer;
-    font-size: 14px;
+    padding: 1px var(--spacing-1);
+    border-radius: var(--radius-xs);
+  }
+
+  .tree-container .state-customer-name:hover {
+    background: rgba(0, 122, 255, 0.08);
+    text-decoration: underline;
+  }
+
+  /* direct 해제 버튼 — row hover 시에만 노출 */
+  .tree-container .state-unassign-wrapper {
+    margin-left: var(--spacing-1);
+    display: inline-flex;
+    opacity: 0;
+    transition: opacity 120ms ease;
+  }
+
+  .tree-container .guide-node-content.state-direct:hover .state-unassign-wrapper,
+  .tree-container .guide-node-content.state-direct:focus-within .state-unassign-wrapper {
+    opacity: 1;
+  }
+
+  /* 해제 버튼 색: hover 시 destructive */
+  .tree-container .state-unassign-wrapper .button--link {
+    color: var(--color-text-tertiary);
+    font-weight: 400;
+  }
+
+  .tree-container .state-unassign-wrapper .button--link:hover:not(:disabled) {
+    color: var(--color-destructive, var(--color-ios-red, #ff3b30));
+    background-color: transparent;
+  }
+
+  /* ---------- inherited: 톤 다운 (배경 없음, 흐린 색) ---------- */
+
+  .tree-container .guide-node-content.state-inherited {
+    background-color: transparent;
+  }
+
+  .tree-container .guide-node-content.state-inherited .folder-label {
+    color: var(--color-text-tertiary);
+    font-weight: 400;
+  }
+
+  .tree-container .guide-icon.folder-inherited {
+    color: var(--color-text-tertiary);
+    opacity: 0.7;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .tree-container .state-inherited-prefix {
+    display: inline-flex;
+    align-items: center;
+    margin-left: var(--spacing-1);
+    color: var(--color-text-tertiary);
+    opacity: 0.7;
+  }
+
+  .tree-container .state-inherited-customer {
+    margin-left: var(--spacing-0-5);
+    color: var(--color-text-tertiary);
+    font-weight: 400;
+    cursor: help;
+  }
+
+  /* "(상속)" 텍스트 — 접근성/테스트 호환용, 시각적 숨김 */
+  .tree-container .state-inherited-note.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ---------- unmapped: 중립 톤 ---------- */
+
+  .tree-container .guide-node-content.state-unmapped .folder-label {
+    color: var(--color-text-secondary);
+    font-weight: 400;
+  }
+
+  .tree-container .state-assign-wrapper {
+    margin-left: var(--spacing-1-5);
+    display: inline-flex;
+  }
+
+  .tree-container .state-assign-disabled-wrapper {
+    display: inline-flex;
+  }
+
+  /* ---------- 지정 버튼: link 스타일 오버라이드 (Progressive Disclosure) ---------- */
+
+  .tree-container .assign-link-btn {
+    opacity: 0.55;
+    color: var(--color-text-tertiary);
+    font-weight: 400;
+    background-color: transparent;
+    text-decoration: none;
+    padding: var(--spacing-0-5) var(--spacing-1);
+    transition: opacity 120ms ease, color 120ms ease, background-color 120ms ease;
+  }
+
+  /* row hover 시 버튼 등장 + 색 강조 */
+  .tree-container .guide-node-content.state-unmapped:hover .assign-link-btn {
+    opacity: 1;
+    color: var(--color-ios-blue, #007aff);
+    background-color: rgba(0, 122, 255, 0.08);
+  }
+
+  .tree-container .assign-link-btn:hover:not(:disabled) {
+    opacity: 1;
+    color: var(--color-ios-blue, #007aff);
+    background-color: rgba(0, 122, 255, 0.12);
+    text-decoration: none;
+  }
+
+  /* 공존 금지(disabled) 톤 — specificity 상향으로 hover 오버라이드 방어 */
+  .tree-container .assign-link-btn.assign-link-btn--disabled,
+  .tree-container .guide-node-content.state-unmapped:hover .assign-link-btn.assign-link-btn--disabled {
+    opacity: 0.35;
+    color: var(--color-text-quaternary, var(--color-text-tertiary));
+    cursor: not-allowed;
+    background-color: transparent;
+  }
+
+  /* ==================== 토글/아이콘/이름/정보 ==================== */
+
+  .tree-container .guide-toggle {
+    width: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     color: var(--color-text-tertiary);
     -webkit-user-select: none;
     user-select: none;
+    flex-shrink: 0;
   }
 
-  .tree-container .guide-checkbox:hover {
-    color: var(--color-ios-blue, #007aff);
-  }
-
-  .tree-container .guide-checkbox.checked {
-    color: var(--color-ios-green, #34c759);
-  }
-
-  /* 토글 */
-  .tree-container .guide-toggle {
-    width: 14px;
-    font-size: 10px;
-    color: var(--color-text-secondary);
-    -webkit-user-select: none;
-    user-select: none;
-    text-align: center;
-  }
-
-  /* 아이콘 */
   .tree-container .guide-icon {
     font-size: 14px;
     line-height: 1;
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
   }
 
   .tree-container .guide-icon.folder {
-    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+    color: var(--color-text-tertiary);
   }
 
   .tree-container .guide-icon.customer-icon {
@@ -284,7 +366,7 @@
     justify-content: center;
   }
 
-  /* 하위 폴더 아이콘 */
+  /* 하위 폴더 아이콘 opacity */
   .tree-container .guide-node .guide-node .guide-icon.folder {
     opacity: 0.6;
   }
@@ -292,71 +374,24 @@
   /* 이름 */
   .tree-container .guide-name {
     color: var(--color-text-secondary);
-    font-size: var(--font-size-caption-1);  /* FONT_SIZE_STANDARDS: 테이블 데이터 */
-  }
-
-  .tree-container .guide-name.customer {
-    color: var(--color-ios-green, #34c759);
-    font-weight: 600;
-  }
-
-  .tree-container .guide-name.customer.unmatched {
-    color: var(--color-ios-orange, #ff9500);
-  }
-
-
-  .tree-container .guide-name.subfolder {
-    color: var(--color-text-tertiary);
-    font-weight: 400;
+    font-size: var(--font-size-caption-1);
   }
 
   .tree-container .guide-name.file {
     color: var(--color-text-tertiary);
-  }
-
-  /* 매칭 표시 */
-  .tree-container .guide-match {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-1);
-    margin-left: var(--spacing-1-5);
-  }
-
-  .tree-container .guide-arrow {
-    color: var(--color-ios-green, #34c759);
-    font-weight: 700;
-    font-size: var(--font-size-caption-1);
-  }
-
-  .tree-container .guide-customer-badge {
-    padding: 1px var(--spacing-2);
-    background: rgba(52, 199, 89, 0.15);
-    color: var(--color-ios-green, #34c759);
-    font-size: 10px;
-    font-weight: 600;
-    border-radius: 10px;
-  }
-
-  /* 미매칭 노트 */
-  .tree-container .guide-note {
-    margin-left: var(--spacing-1-5);
-    padding: 1px var(--spacing-1-5);
-    background: rgba(255, 149, 0, 0.15);
-    color: var(--color-ios-orange, #ff9500);
-    font-size: 10px;  /* FONT_SIZE_STANDARDS: 배지 */
-    font-weight: 600;
-    border-radius: 8px;
+    font-weight: 400;
   }
 
   /* 정보 (파일 수, 크기) */
   .tree-container .guide-info {
     margin-left: auto;
     color: var(--color-text-tertiary);
-    font-size: 10px;
+    font-size: 11px;  /* F: 10 → 11 */
     font-weight: 400;
   }
 
-  /* 경고 메시지 */
+  /* ==================== 경고 메시지 ==================== */
+
   .preview-warning {
     display: flex;
     align-items: center;
@@ -367,63 +402,16 @@
     border-radius: var(--radius-sm);
     font-size: var(--font-size-caption-1);
     font-weight: 400;
-    flex-shrink: 0; /* 크기 고정 */
+    flex-shrink: 0;
   }
 
-  /* placeholder 상태 경고 (파란색) */
   .preview-warning.placeholder {
     background-color: var(--color-primary-alpha-10, rgba(0, 122, 255, 0.1));
     color: var(--color-ios-blue, #007aff);
   }
 
-  /* 고객 지정 버튼 */
-  .tree-container .guide-assign-btn {
-    margin-left: var(--spacing-1-5);
-    padding: 1px var(--spacing-2);
-    border: 1px solid var(--color-ios-blue, #007aff);
-    background: transparent;
-    color: var(--color-ios-blue, #007aff);
-    font-size: 10px;
-    font-weight: 600;
-    border-radius: 8px;
-    cursor: pointer;
-    white-space: nowrap;
-  }
+  /* ==================== 고객 검색 드롭다운 ==================== */
 
-  .tree-container .guide-assign-btn:hover {
-    background: rgba(0, 122, 255, 0.1);
-  }
-
-  /* 수동 지정 배지 */
-  .tree-container .guide-manual-badge {
-    margin-left: var(--spacing-1);
-    padding: 1px var(--spacing-1-5);
-    background: rgba(0, 122, 255, 0.12);
-    color: var(--color-ios-blue, #007aff);
-    font-size: 10px;
-    font-weight: 600;
-    border-radius: 8px;
-  }
-
-  /* 매핑 해제 버튼 */
-  .tree-container .guide-unassign-btn {
-    margin-left: var(--spacing-1);
-    padding: 0 4px;
-    border: none;
-    background: transparent;
-    color: var(--color-text-tertiary);
-    font-size: 12px;
-    cursor: pointer;
-    line-height: 1;
-    border-radius: 4px;
-  }
-
-  .tree-container .guide-unassign-btn:hover {
-    color: var(--color-ios-red, #ff3b30);
-    background: rgba(255, 59, 48, 0.1);
-  }
-
-  /* 고객 검색 드롭다운 */
   .customer-search-dropdown {
     position: relative;
     margin: var(--spacing-1) 0 var(--spacing-1) 46px;
@@ -488,14 +476,15 @@
     color: var(--color-text-tertiary);
   }
 
-  /* 버튼 영역 - 항상 하단 고정 */
+  /* ==================== 하단 버튼 영역 ==================== */
+
   .preview-actions {
     display: flex;
     justify-content: flex-end;
     gap: var(--spacing-sm);
     padding-top: var(--spacing-md);
-    flex-shrink: 0; /* 크기 고정 */
-    margin-top: auto; /* 남은 공간을 위로 밀어서 하단 고정 */
+    flex-shrink: 0;
+    margin-top: auto;
   }
 
 } /* end @layer components */
