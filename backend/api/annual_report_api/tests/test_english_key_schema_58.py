@@ -110,6 +110,50 @@ class TestNormalizeContractEnglishKeys:
         raw = {"보험상품": "종신보험", "계약자": "[계약자]"}
         assert normalize_contract(raw) is None
 
+    def test_whitespace_variant_headers_are_matched_issue_62(self):
+        """
+        이슈 #62 회귀 — Upstage Document AI 가 반환하는 공백 포함 헤더(
+        '계약 상태', '가입금액 (만원)', '보험 기간', '납입 기간', '보험료 (원)'
+        )도 모두 영문 키로 정규화되어야 한다.
+        """
+        raw = {
+            "순번": "1",
+            "증권번호": "0013685117",
+            "보험상품": "무배당 360 종합보장보험",
+            "계약자": "이율",
+            "피보험자": "이율",
+            "계약일": "2025-03-23",
+            "계약 상태": "정상",
+            "가입금액 (만원)": "200",
+            "보험 기간": "종신",
+            "납입 기간": "30년",
+            "보험료 (원)": "32,308",
+        }
+        result = normalize_contract(raw)
+        assert result is not None
+        assert result["contract_number"] == "0013685117"
+        assert result["status"] == "정상"
+        assert result["coverage_amount"] == 200.0
+        assert result["insurance_period"] == "종신"
+        assert result["premium_payment_period"] == "30년"
+        assert result["monthly_premium"] == 32308
+
+    def test_newline_variant_headers_are_matched(self):
+        """pdfplumber 가 반환하는 개행 포함 헤더도 모두 매칭되어야 한다."""
+        raw = {
+            "증권번호": "POL-001",
+            "보험\n기간": "종신",
+            "납입\n기간": "20년",
+            "보험료\n(원)": "150000",
+            "가입금액\n(만원)": "10000",
+        }
+        result = normalize_contract(raw)
+        assert result is not None
+        assert result["insurance_period"] == "종신"
+        assert result["premium_payment_period"] == "20년"
+        assert result["monthly_premium"] == 150000
+        assert result["coverage_amount"] == 10000.0
+
 
 # ─────────────────────────────────────────────────────────────
 # 2) convert_contract_format: table_extractor → 영문 키

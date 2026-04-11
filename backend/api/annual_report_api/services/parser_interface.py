@@ -9,9 +9,22 @@ AR 파서 공통 인터페이스 및 타입 정의
 """
 
 import logging
+import re
 from typing import Dict, List, Optional, TypedDict, Union
 
 logger = logging.getLogger(__name__)
+
+
+def _strip_ws(key: str) -> str:
+    """헤더 키의 모든 공백(스페이스·탭·개행)을 제거하여 정규화.
+
+    이슈 #62: Upstage Document AI 는 HTML 테이블 헤더를 '계약 상태', '가입금액 (만원)',
+    '보험 기간', '납입 기간' 처럼 공백 포함 형태로 반환한다. pdfplumber 는 줄바꿈이
+    섞인 '납입\\n기간' 형태로 반환한다. 모든 변형을 공백 제거 기반으로 매칭한다.
+    """
+    if not isinstance(key, str):
+        return ""
+    return re.sub(r"\s+", "", key)
 
 
 class ContractInfo(TypedDict, total=False):
@@ -60,6 +73,9 @@ def normalize_contract(contract: Dict) -> Optional[Dict]:
     """
     계약 정보를 표준 형식(영문 키)으로 정규화
 
+    이슈 #62: 헤더 키 매칭을 whitespace-insensitive 로 수행하여
+    '계약 상태', '가입금액 (만원)', '보험\\n기간' 등 변형을 모두 동일하게 처리한다.
+
     Args:
         contract: 원본 계약 정보 딕셔너리 (한글 헤더 또는 영문 키 혼재 가능)
 
@@ -69,14 +85,22 @@ def normalize_contract(contract: Dict) -> Optional[Dict]:
     if not contract:
         return None
 
+    # 입력 dict 를 공백 제거 키 기준으로 색인
+    stripped_index: Dict[str, object] = {}
+    for raw_key, raw_val in contract.items():
+        if not isinstance(raw_key, str):
+            continue
+        stripped_index.setdefault(_strip_ws(raw_key), raw_val)
+
     result: Dict = {}
 
     for std_key, variants in FIELD_MAPPINGS.items():
         # 영문 표준 키 자체도 후보로 포함 (이미 영문으로 들어온 경우 지원)
         candidates = [std_key, *variants]
         for variant in candidates:
-            if variant in contract:
-                val = contract[variant]
+            lookup = _strip_ws(variant)
+            if lookup in stripped_index:
+                val = stripped_index[lookup]
 
                 # 타입 변환
                 if std_key == "seq":
