@@ -1014,6 +1014,15 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                           </button>
                         )}
                       </div>
+                      <div className="customer-full-detail__nav-group">
+                        <Tooltip content="문서 내용 검색">
+                          <button type="button" className="customer-full-detail__content-search-btn" onClick={() => setIsDocContentSearchModalOpen(true)} aria-label="문서 내용 검색">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                              <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                            </svg>
+                          </button>
+                        </Tooltip>
+                      </div>
                     </div>
                     <div className="customer-full-detail__section-content customer-full-detail__section-content--documents">
                       <DocumentsTab customer={customer} onDocumentCountChange={setDocumentCount} onAnnualReportNeedRefresh={() => setAnnualReportRefreshTrigger(prev => prev + 1)} onCustomerReviewNeedRefresh={() => setCustomerReviewRefreshTrigger(prev => prev + 1)} searchTerm={documentSearchTerm} onSearchChange={setDocumentSearchTerm} onNavigate={onNavigate} onExpandToExplorer={onExpandToExplorer && customer ? () => onExpandToExplorer(customer._id, customer.personal_info?.name || '', customer.insurance_info?.customer_type || '개인') : undefined} onDocumentDeleted={onDocumentDeleted} />
@@ -1464,9 +1473,9 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                   {documentCount > 0 && (
                     <span className="customer-full-detail__section-count">{documentCount}</span>
                   )}
-                  {/* 🍎 분류 드롭다운 + 확대 버튼 (DocumentsTab에서 포탈로 렌더링) */}
+                  {/* 🍎 분류 드릴다운 트리 (DocumentsTab에서 포탈로 렌더링) */}
                   <div ref={setDocFilterBarEl} className="customer-full-detail__doc-filter-slot" />
-                  {/* 🍎 파일명 검색 */}
+                  {/* 🍎 파일명 검색 input — 단독 (돋보기 모달과 분리) */}
                   <div className="customer-full-detail__section-search">
                     <SFSymbol
                       name="magnifyingglass"
@@ -1498,31 +1507,54 @@ export const CustomerFullDetailView: React.FC<CustomerFullDetailViewProps> = ({
                       </button>
                     )}
                   </div>
-                  {/* 🍎 문서 내용 검색 버튼 */}
-                  <Tooltip content="문서 내용 검색">
+                  {/* 🍎 nav 그룹: [문서 내용 검색][문서 분류함][Focus 확대]
+                      Focus 확대는 모든 섹션에서 맨 우측 앵커 — 글로벌 일관성 유지. */}
+                  <div className="customer-full-detail__nav-group">
+                    <Tooltip content="문서 내용 검색">
+                      <button
+                        type="button"
+                        className="customer-full-detail__content-search-btn"
+                        onClick={() => setIsDocContentSearchModalOpen(true)}
+                        aria-label="문서 내용 검색"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                      </button>
+                    </Tooltip>
+                    {onExpandToExplorer && customer && (
+                      <Tooltip content="문서 분류함 열기">
+                        <button
+                          type="button"
+                          className="customer-full-detail__doc-library-btn"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onExpandToExplorer(
+                              customer._id,
+                              customer.personal_info?.name || '',
+                              customer.insurance_info?.customer_type || '개인'
+                            )
+                          }}
+                          aria-label="문서 분류함 열기"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                            <path d="M1.75 3A1.75 1.75 0 000 4.75v6.5C0 12.216.784 13 1.75 13h12.5A1.75 1.75 0 0016 11.25V5.75A1.75 1.75 0 0014.25 4H8.378a.25.25 0 01-.2-.1L7.1 2.45A1.75 1.75 0 005.7 1.75H1.75z" />
+                          </svg>
+                        </button>
+                      </Tooltip>
+                    )}
                     <button
                       type="button"
-                      className="customer-full-detail__content-search-btn"
-                      onClick={() => setIsDocContentSearchModalOpen(true)}
-                      aria-label="문서 내용 검색"
+                      className="customer-full-detail__expand-btn"
+                      onClick={(e) => { e.stopPropagation(); handleFocusSection('documents') }}
+                      aria-label={focusSection === 'documents' ? '그리드 보기로 복귀' : '문서 확대'}
                     >
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                      </svg>
+                      {focusSection === 'documents'
+                        ? <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M9.5 2v4.5H14M6.5 14v-4.5H2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        : <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M14 2l-4.5 4.5M2 14l4.5-4.5M9.5 2H14v4.5M6.5 14H2v-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      }
                     </button>
-                  </Tooltip>
-                  {/* 🍎 Focus Mode 확장 버튼 */}
-                  <button
-                    type="button"
-                    className="customer-full-detail__expand-btn"
-                    onClick={(e) => { e.stopPropagation(); handleFocusSection('documents') }}
-                    aria-label={focusSection === 'documents' ? '그리드 보기로 복귀' : '문서 확대'}
-                  >
-                    {focusSection === 'documents'
-                      ? <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M9.5 2v4.5H14M6.5 14v-4.5H2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      : <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M14 2l-4.5 4.5M2 14l4.5-4.5M9.5 2H14v4.5M6.5 14H2v-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    }
-                  </button>
+                  </div>
                 </h2>
                   <div className="customer-full-detail__section-content customer-full-detail__section-content--documents">
                     <DocumentsTab
