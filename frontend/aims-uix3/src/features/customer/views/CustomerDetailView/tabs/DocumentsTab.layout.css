@@ -368,14 +368,6 @@
     min-width: 0;
   }
 
-  .document-category-filter__label {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
   /* 카테고리 필터 드롭다운 — 컴팩트 + 테두리 */
   .document-category-filter .ios-dropdown__trigger {
     padding: 0 var(--spacing-2);

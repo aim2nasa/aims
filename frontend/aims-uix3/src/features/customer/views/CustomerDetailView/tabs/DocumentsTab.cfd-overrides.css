@@ -397,10 +397,6 @@
     border-bottom-color: var(--color-ios-separator-dark);
   }
 
-  .customer-full-detail__section-content--documents .document-category-filter__label {
-    font-size: 9px;
-  }
-
   .customer-full-detail__section-content--documents .document-category-filter .ios-dropdown__trigger {
     padding: 0 var(--spacing-1);
     min-height: unset;
