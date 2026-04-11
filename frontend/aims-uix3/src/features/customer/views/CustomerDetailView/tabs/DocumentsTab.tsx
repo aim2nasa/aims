@@ -46,7 +46,8 @@ import { errorReporter } from '@/shared/lib/errorReporter'
 import { documentTypesService } from '@/services/documentTypesService'
 import { useColumnResize, type ColumnConfig } from '@/hooks/useColumnResize'
 import { getCategoryForType, getDocumentTypeLabelsMap } from '@/shared/constants/documentCategories'
-import { DocumentCategoryFilter } from './DocumentCategoryFilter'
+import { DocumentCategoryFilter, DocumentCategoryFolderGrid, ALL_CATEGORY_SENTINEL } from './DocumentCategoryFilter'
+import './DocumentCategoryFilter.css'
 import './DocumentsTab.layout.css';
 import './DocumentsTab.features.css';
 import './DocumentsTab.extras.css';
@@ -197,8 +198,12 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     }
   }, [documentActions])
 
-  // 카테고리 필터 상태
-  const [selectedCategory, setSelectedCategory] = useState('')
+  // 분류 트리 네비게이션 상태 (드릴다운 — 2026-04-11 #)
+  // selectedCategory: null = 루트 (대분류 6개 표시)
+  // selectedSubType: null = 폴더 모드 (한 단계 위 폴더 표시)
+  // selectedSubType !== null = 파일 모드 (해당 소분류 파일 테이블 표시)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedSubType, setSelectedSubType] = useState<string | null>(null)
 
   // 🍎 페이지네이션 상태 ('auto' 또는 숫자)
   const [currentPage, setCurrentPage] = useState(1)
@@ -528,16 +533,34 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
   const filteredDocuments = useMemo(() => {
     let result = documents
 
-    // 카테고리 필터
-    if (selectedCategory) {
-      result = result.filter(doc => {
-        const docType = doc.document_type || (doc.isAnnualReport ? 'annual_report' : '')
-        return getCategoryForType(docType) === selectedCategory
-      })
+    // 분류 트리 필터 (대분류 + 소분류 AND 결합)
+    // 단, 검색어가 있으면 분류 필터 무시 — 검색은 위치 무관 (Phase 3 #)
+    const isSearching = searchTerm.trim().length > 0
+    if (!isSearching) {
+      if (selectedCategory === ALL_CATEGORY_SENTINEL) {
+        // "전체" 모드: 분류 구분 없이 모든 문서 통과 (최우선 분기)
+        // result = documents 그대로 유지
+      } else if (selectedSubType) {
+        // 파일 모드: 정확한 doc_type 매칭
+        result = result.filter(doc => {
+          const docType = doc.document_type || (doc.isAnnualReport ? 'annual_report' : '')
+          return docType === selectedSubType
+        })
+      } else if (selectedCategory) {
+        // 카테고리 모드: 폴더 그리드 표시 단계 — 파일 테이블은 숨김
+        // (filteredDocuments는 사용되지 않지만, 일관성을 위해 카테고리로 필터링)
+        result = result.filter(doc => {
+          const docType = doc.document_type || (doc.isAnnualReport ? 'annual_report' : '')
+          return getCategoryForType(docType) === selectedCategory
+        })
+      } else {
+        // 루트 모드: 폴더 그리드 표시 단계 — 파일 테이블은 숨김
+        // 일관성을 위해 빈 배열 반환은 하지 않고 전체 유지 (실제 렌더 가드는 isInFileMode로 처리)
+      }
     }
 
     // 검색어 필터
-    if (searchTerm.trim()) {
+    if (isSearching) {
       const term = searchTerm.toLowerCase().trim()
       result = result.filter(doc =>
         (doc.displayName ?? '').toLowerCase().includes(term) ||
@@ -546,7 +569,16 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
     }
 
     return result
-  }, [documents, searchTerm, selectedCategory])
+  }, [documents, searchTerm, selectedCategory, selectedSubType])
+
+  // 파일 테이블을 노출할지 결정 (검색 중 / 소분류 진입 / "전체" 모드)
+  const isInFileMode = useMemo(() => {
+    return (
+      searchTerm.trim().length > 0 ||
+      selectedSubType !== null ||
+      selectedCategory === ALL_CATEGORY_SENTINEL
+    )
+  }, [searchTerm, selectedSubType, selectedCategory])
 
   // 🍎 문서유형 정렬용 라벨 맵 생성 (한글 라벨 기준 가나다순 - 백엔드와 동일)
   const docTypeLabelMap = useMemo(() => {
@@ -1161,8 +1193,14 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
               <DocumentCategoryFilter
                 documents={documents}
                 selectedCategory={selectedCategory}
+                selectedSubType={selectedSubType}
                 onCategoryChange={(cat) => {
                   setSelectedCategory(cat)
+                  setSelectedSubType(null)
+                  setCurrentPage(1)
+                }}
+                onSubTypeChange={(sub) => {
+                  setSelectedSubType(sub)
                   setCurrentPage(1)
                 }}
               />
@@ -1195,7 +1233,25 @@ export const DocumentsTab: React.FC<DocumentsTabProps> = ({
 
       {renderState()}
 
-      {!isEmpty && documents.length > 0 && (
+      {/* 분류 폴더 그리드 — 폴더 모드일 때만 (드릴다운 트리 #) */}
+      {!isEmpty && documents.length > 0 && !isInFileMode && (
+        <DocumentCategoryFolderGrid
+          documents={documents}
+          selectedCategory={selectedCategory}
+          selectedSubType={selectedSubType}
+          onCategoryChange={(cat) => {
+            setSelectedCategory(cat)
+            setSelectedSubType(null)
+            setCurrentPage(1)
+          }}
+          onSubTypeChange={(sub) => {
+            setSelectedSubType(sub)
+            setCurrentPage(1)
+          }}
+        />
+      )}
+
+      {!isEmpty && documents.length > 0 && isInFileMode && (
         <>
           {/* 🍎 리스트 컨테이너 - CenterPane 스타일 */}
           <div

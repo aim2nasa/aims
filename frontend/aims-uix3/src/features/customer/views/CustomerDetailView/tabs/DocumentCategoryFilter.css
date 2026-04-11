@@ -1,0 +1,247 @@
+/**
+ * DocumentCategoryFilter — 드릴다운 트리 네비게이션 스타일
+ * @since 2026-04-11
+ *
+ * 합의된 명세:
+ * - 브레드크럼 (필터 바 안)
+ * - 폴더 그리드 (파일 리스트 영역)
+ * - CSS 변수만 사용, hex 금지, importance flag 금지, font-weight 500 금지
+ */
+
+/* ============================================================================
+ * Breadcrumb (필터 바 안)
+ * 기존 .document-category-filter 컨테이너의 자식 요소들
+ * ============================================================================ */
+
+.document-category-filter__crumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  flex-wrap: nowrap;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/*
+ * 베이스 규칙: 모든 브레드크럼 항목(인터랙티브 Button + 현재 페이지 <span>)에 적용.
+ * 두 케이스 모두 동일한 시각 스타일을 가져야 한다.
+ */
+.document-category-filter__crumb {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--spacing-1);
+  height: 20px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/*
+ * 인터랙티브 항목은 @/shared/ui/Button (variant="ghost" size="sm")로 렌더된다.
+ * Button의 .button--sm 기본값(min-height 24px, padding 2px 10px, font-size 12px,
+ * border-radius 6px)과 @media (pointer: coarse)의 ::after 44px 히트박스는 브레드크럼
+ * 디자인(20px/18px, 10~11px)을 깨므로 명시적으로 오버라이드한다.
+ *
+ * 본 CSS는 @layer 외부이므로 @layer components 안의 .button 규칙보다 항상 우위.
+ */
+.document-category-filter__crumb.button {
+  min-height: 0;
+}
+
+.document-category-filter__crumb.button .button__content {
+  display: inline;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* 터치 기기에서 .button--sm::after가 추가하는 44px 히트박스 무력화 */
+@media (pointer: coarse) {
+  .document-category-filter__crumb.button--sm::after {
+    content: none;
+  }
+}
+
+.document-category-filter__crumb:hover:not(:disabled) {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.document-category-filter__crumb:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 1px;
+}
+
+.document-category-filter__crumb:disabled {
+  cursor: default;
+}
+
+.document-category-filter__crumb--current {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+/* "전체" 가상 폴더 전용 강조 — 일반 카테고리와 시각적으로 구분 */
+.document-category-filter__crumb--all {
+  color: var(--color-accent-primary);
+}
+
+.document-category-filter__sep {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  user-select: none;
+}
+
+/* CustomerFullDetailView — 더 작은 폰트 (Button 인터랙티브 + span 현재 페이지 모두 적용) */
+.customer-full-detail__section-content--documents .document-category-filter__crumb {
+  font-size: 10px;
+  height: 18px;
+  padding: 1px var(--spacing-0-5);
+  max-width: 110px;
+}
+
+/* CFD에서도 Button의 min-height 24px 무력화 */
+.customer-full-detail__section-content--documents .document-category-filter__crumb.button {
+  min-height: 0;
+}
+
+.customer-full-detail__section-content--documents .document-category-filter__sep {
+  font-size: 10px;
+}
+
+/* ============================================================================
+ * Folder Grid (파일 리스트 영역)
+ * ============================================================================ */
+
+.document-category-folder-grid {
+  display: grid;
+  /* 한 줄 레이아웃 — 가로폭이 충분하면 2~3열, 좁으면 1열로 자연스럽게 줄어든다 */
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+  flex: 1 1 auto;
+  align-content: flex-start;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.document-category-folder-grid--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-6);
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+}
+
+/*
+ * 폴더 카드 — 수평 한 줄 레이아웃 (2026-04-11)
+ * [아이콘] [라벨 (flex-grow, ellipsis)] [카운트 배지]
+ */
+.document-category-folder {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  min-height: 44px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  text-align: left;
+  font-family: inherit;
+  color: var(--color-text-primary);
+}
+
+.document-category-folder:hover {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-accent-primary);
+}
+
+.document-category-folder:active {
+  transform: scale(0.98);
+}
+
+.document-category-folder:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+.document-category-folder__icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+}
+
+.document-category-folder__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.document-category-folder__count {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-primary);
+  padding: 1px var(--spacing-1-5);
+  border-radius: 10px;
+  min-width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/*
+ * CustomerFullDetailView — 컴팩트 변형
+ * 한 줄 레이아웃은 동일, 폰트/패딩만 약간 작게.
+ * 컴팩트 컨텍스트에서는 한 컬럼(1fr)으로 강제 — 좁은 너비에서 한 줄 카드의 가독성 우선.
+ */
+.customer-full-detail__section-content--documents .document-category-folder-grid {
+  padding: var(--spacing-2);
+  gap: var(--spacing-1-5);
+  grid-template-columns: 1fr;
+}
+
+.customer-full-detail__section-content--documents .document-category-folder {
+  min-height: 36px;
+  padding: var(--spacing-1-5) var(--spacing-2);
+  border-radius: 8px;
+  gap: var(--spacing-1-5);
+}
+
+.customer-full-detail__section-content--documents .document-category-folder__icon {
+  font-size: 16px;
+  width: 20px;
+}
+
+.customer-full-detail__section-content--documents .document-category-folder__label {
+  font-size: 12px;
+}
+
+.customer-full-detail__section-content--documents .document-category-folder__count {
+  font-size: 10px;
+  min-width: 20px;
+}
