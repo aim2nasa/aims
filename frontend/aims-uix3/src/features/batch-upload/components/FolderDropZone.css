@@ -108,6 +108,15 @@
     to { transform: rotate(360deg); }
   }
 
+  /* 진행률 수치 강조 — 수치로 표시되어 무작정 기다리지 않게 함 */
+  .folder-progress-count {
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--color-primary-500);
+    letter-spacing: -0.2px;
+  }
+
   /* ==================== 접히는 가이드 (AR/CR 패턴) ==================== */
 
   .folder-guide {

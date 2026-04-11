@@ -26,7 +26,7 @@ import { groupFilesByFolder, createFolderMappings, type CustomerForMatching } fr
 import { validateBatch } from './utils/fileValidation'
 import { getMyStorageInfo, type StorageInfo } from '@/services/userService'
 import { checkStorageWithInfo } from '@/shared/lib/fileValidation'
-import type { FolderMapping } from './types'
+import type { FolderMapping, BatchAnalyzeProgress } from './types'
 import { getBatchId, setBatchId, addBatchExpectedTotal } from '@/hooks/useBatchId'
 import './BatchDocumentUploadView.css'
 import './BatchDocumentUploadView.mobile.css'
@@ -162,6 +162,10 @@ export default function BatchDocumentUploadView({
 
   // 🍎 도움말 모달 상태
   const [helpModalVisible, setHelpModalVisible] = useState(false)
+
+  // 폴더 분석 진행률 (reading → validating → matching → checking-storage)
+  // reading 단계는 FolderDropZone이 보고, 이후 단계는 handleFilesSelected에서 직접 업데이트
+  const [analyzeProgress, setAnalyzeProgress] = useState<BatchAnalyzeProgress | null>(null)
 
   // 스토리지 용량 초과 다이얼로그 상태
   const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null)
@@ -311,21 +315,30 @@ export default function BatchDocumentUploadView({
     // 스토리지 정보가 로드되지 않았으면 대기
     if (!storageInfo) {
       console.warn('[BatchUpload] Storage info not loaded yet')
+      setAnalyzeProgress(null)
       return
     }
 
+    try {
     // 1. 파일을 폴더별로 그룹화 (고객명 확인을 위해 customers 전달)
     const { groups: fileGroups, parentFolderName: detectedParentName, rootFiles } = groupFilesByFolder(files, customers)
 
     if (fileGroups.size === 0) {
       setValidationErrors(['폴더 구조가 없는 파일입니다. 폴더를 선택해주세요.'])
+      setAnalyzeProgress(null)
       return
     }
 
     // 2. 파일 검증 (tierLimit: -1이면 무제한)
     // rootFiles도 포함하여 전체 파일 목록 구성
     const allFiles = [...Array.from(fileGroups.values()).flat(), ...rootFiles]
+
+    // 🔵 validating 단계 시작
+    setAnalyzeProgress({ stage: 'validating', current: 0, total: allFiles.length })
+    // React flush를 위해 micro-task 양보 (사용자가 즉시 단계 변화를 볼 수 있도록)
+    await new Promise<void>(resolve => setTimeout(resolve, 0))
     const validation = validateBatch(allFiles, tierLimit)
+    setAnalyzeProgress({ stage: 'validating', current: allFiles.length, total: allFiles.length })
 
     // 시스템/임시 파일과 기타 검증 실패를 분리
     const systemFiles = validation.invalidFiles.filter(f => f.reason === 'system_file')
@@ -364,9 +377,16 @@ export default function BatchDocumentUploadView({
     setValidationErrors(errors)
 
     // 3. 폴더-고객 매핑 생성
+    // 🔵 matching 단계 시작
+    setAnalyzeProgress({ stage: 'matching', current: 0, total: fileGroups.size })
+    await new Promise<void>(resolve => setTimeout(resolve, 0))
     const mappings = createFolderMappings(fileGroups, customers)
+    setAnalyzeProgress({ stage: 'matching', current: fileGroups.size, total: fileGroups.size })
 
     // 4. 스토리지 용량 체크 (공통 모듈 사용)
+    // 🔵 checking-storage 단계 시작
+    setAnalyzeProgress({ stage: 'checking-storage', current: 0, total: null })
+    await new Promise<void>(resolve => setTimeout(resolve, 0))
     // storageInfo는 이미 로드됨
     const storageCheck = checkStorageWithInfo(allFiles, storageInfo)
 
@@ -386,6 +406,7 @@ export default function BatchDocumentUploadView({
           : null
       })
       setShowStorageExceededDialog(true)
+      setAnalyzeProgress(null)
       return // preview 단계로 이동하지 않음
     }
 
@@ -401,6 +422,13 @@ export default function BatchDocumentUploadView({
     // 7. 미리보기 단계로 이동
     if (mappings.length > 0) {
       setStep('preview')
+    }
+    } catch (err) {
+      console.error('[BatchUpload] 분석 단계 오류:', err)
+      setValidationErrors(['폴더 분석 중 오류가 발생했습니다. 다시 시도해주세요.'])
+    } finally {
+      // 모든 경로에서 분석 진행률 해제 (드롭존 기본 UI로 복귀)
+      setAnalyzeProgress(null)
     }
   }, [tierLimit, customers, storageInfo])
 
@@ -523,6 +551,8 @@ export default function BatchDocumentUploadView({
             <FolderDropZone
               onFilesSelected={handleFilesSelected}
               disabled={isLoadingCustomers || !storageInfo}
+              analyzeProgress={analyzeProgress}
+              onAnalyzeProgress={setAnalyzeProgress}
             />
             {(isLoadingCustomers || !storageInfo) && (
               <div className="batch-upload-loading">

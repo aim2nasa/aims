@@ -8,21 +8,113 @@
  */
 
 import { useState, useCallback, useRef, type DragEvent, type ChangeEvent } from 'react'
+import type { BatchAnalyzeProgress, BatchAnalyzeStage } from '../types'
 import './FolderDropZone.css'
+
+/**
+ * 같은 디렉토리 내 파일 동시 읽기 상한
+ * - 너무 크면 브라우저 메모리/핸들 폭발
+ * - 너무 작으면 병렬 이점 소실
+ * - 한 번에 500개 파일을 Promise.all로 병렬 읽기 → 다음 청크
+ */
+const FILE_READ_CONCURRENCY = 500
+
+/**
+ * Progress 업데이트 throttle 간격 (ms)
+ * 1000개 파일에 대해 1000번 setState 방지 — 100ms마다 최대 1번
+ */
+const PROGRESS_THROTTLE_MS = 100
+
+/**
+ * 단계별 라벨 (한글)
+ */
+function renderStageLabel(stage: BatchAnalyzeStage): string {
+  switch (stage) {
+    case 'reading':
+      return '파일 목록 읽는 중...'
+    case 'validating':
+      return '파일 검증 중...'
+    case 'matching':
+      return '고객 매칭 중...'
+    case 'checking-storage':
+      return '용량 확인 중...'
+    default:
+      return '폴더 분석 중...'
+  }
+}
+
+/**
+ * 단계별 수치 카운트 텍스트
+ * - reading: "{current}개" (총계 미지수)
+ * - validating: "{current} / {total}"
+ * - matching: "{current} / {total} 폴더"
+ * - checking-storage: 카운트 없음
+ */
+function renderStageCount(progress: BatchAnalyzeProgress): string {
+  const { stage, current, total } = progress
+  switch (stage) {
+    case 'reading':
+      return `${current.toLocaleString()}개`
+    case 'validating':
+      return total !== null
+        ? `${current.toLocaleString()} / ${total.toLocaleString()}`
+        : `${current.toLocaleString()}개`
+    case 'matching':
+      return total !== null
+        ? `${current.toLocaleString()} / ${total.toLocaleString()} 폴더`
+        : `${current.toLocaleString()} 폴더`
+    case 'checking-storage':
+      return '잠시만 기다려주세요'
+    default:
+      return ''
+  }
+}
 
 interface FolderDropZoneProps {
   onFilesSelected: (files: File[]) => void | Promise<void>
   disabled?: boolean
+  /**
+   * 분석 진행률 표시 (controlled)
+   * - null: 분석 중 아님 (드롭존 기본 UI 표시)
+   * - 객체: 분석 중 (진행률 UI 표시)
+   * 부모가 readDir 이후 validating/matching/checking-storage 단계를 이어서 보고함
+   */
+  analyzeProgress?: BatchAnalyzeProgress | null
+  /**
+   * 진행률 변경 콜백 (부모 state로 전달)
+   * readDir 단계에서 호출되며, 이후 단계는 부모가 직접 호출
+   */
+  onAnalyzeProgress?: (progress: BatchAnalyzeProgress | null) => void
 }
 
 export default function FolderDropZone({
   onFilesSelected,
-  disabled = false
+  disabled = false,
+  analyzeProgress = null,
+  onAnalyzeProgress
 }: FolderDropZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
   const [isGuideExpanded, setIsGuideExpanded] = useState(false)
   const folderInputRef = useRef<HTMLInputElement>(null)
+
+  // 분석 진행 여부 (UI 비활성화용) — controlled prop 기반
+  const isProcessing = analyzeProgress !== null
+
+  /**
+   * throttle 헬퍼
+   * - 마지막 업데이트 시각을 클로저로 추적
+   * - stage 전환/완료는 즉시 flush (force=true)
+   */
+  const createProgressReporter = useCallback(() => {
+    let lastEmit = 0
+    const emit = (progress: BatchAnalyzeProgress, force = false) => {
+      const now = performance.now()
+      if (!force && now - lastEmit < PROGRESS_THROTTLE_MS) return
+      lastEmit = now
+      onAnalyzeProgress?.(progress)
+    }
+    return emit
+  }, [onAnalyzeProgress])
 
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -45,7 +137,8 @@ export default function FolderDropZone({
 
     if (disabled) return
 
-    setIsProcessing(true)
+    const emitProgress = createProgressReporter()
+    emitProgress({ stage: 'reading', current: 0, total: null }, true)
     try {
       const items = e.dataTransfer.items
       const allFiles: File[] = []
@@ -67,6 +160,7 @@ export default function FolderDropZone({
                 writable: false,
               })
               allFiles.push(fileWithPath)
+              emitProgress({ stage: 'reading', current: allFiles.length, total: null })
               resolve()
             })
           })
@@ -74,24 +168,39 @@ export default function FolderDropZone({
           const dirEntry = entry as FileSystemDirectoryEntry
           const dirReader = dirEntry.createReader()
 
-          return new Promise((resolve) => {
-            const readEntries = () => {
-              dirReader.readEntries(async (entries) => {
-                if (entries.length === 0) {
-                  resolve()
-                  return
-                }
+          // readEntries는 한 번에 최대 100개만 반환하므로 반복 호출 필요
+          const readAllEntries = (): Promise<FileSystemEntry[]> => {
+            return new Promise((resolve, reject) => {
+              const collected: FileSystemEntry[] = []
+              const readNext = () => {
+                dirReader.readEntries((entries) => {
+                  if (entries.length === 0) {
+                    resolve(collected)
+                    return
+                  }
+                  collected.push(...entries)
+                  readNext()
+                }, reject)
+              }
+              readNext()
+            })
+          }
 
-                for (const childEntry of entries) {
-                  await readEntry(childEntry, path + entry.name + '/')
-                }
+          const childEntries = await readAllEntries()
+          const childPath = path + entry.name + '/'
 
-                // 더 읽을 엔트리가 있을 수 있음 (100개 제한)
-                readEntries()
-              })
-            }
-            readEntries()
-          })
+          // 파일/디렉토리 분리
+          const fileChildren = childEntries.filter(c => c.isFile)
+          const dirChildren = childEntries.filter(c => c.isDirectory)
+
+          // 같은 디렉토리 내 파일들을 청크 병렬로 읽기
+          for (let i = 0; i < fileChildren.length; i += FILE_READ_CONCURRENCY) {
+            const chunk = fileChildren.slice(i, i + FILE_READ_CONCURRENCY)
+            await Promise.all(chunk.map(c => readEntry(c, childPath)))
+          }
+
+          // 하위 디렉토리 병렬 탐색
+          await Promise.all(dirChildren.map(c => readEntry(c, childPath)))
         }
       }
 
@@ -109,19 +218,25 @@ export default function FolderDropZone({
           }
         }
 
-        // 모든 엔트리 처리
-        for (const entry of entries) {
-          await readEntry(entry, '')
-        }
+        // 루트 엔트리들 병렬 처리
+        await Promise.all(entries.map(entry => readEntry(entry, '')))
       }
 
+      // reading 단계 완료 flush (throttle 끝단 누락 방지)
+      emitProgress({ stage: 'reading', current: allFiles.length, total: null }, true)
+
       if (allFiles.length > 0) {
+        // 이후 단계(validating/matching/checking-storage)는 부모가 진행률을 보고함
         await onFilesSelected(allFiles)
+      } else {
+        // 파일 없음 — 진행률 리셋
+        onAnalyzeProgress?.(null)
       }
-    } finally {
-      setIsProcessing(false)
+    } catch (err) {
+      console.error('[FolderDropZone] 드롭 처리 오류:', err)
+      onAnalyzeProgress?.(null)
     }
-  }, [disabled, onFilesSelected])
+  }, [disabled, onFilesSelected, onAnalyzeProgress, createProgressReporter])
 
   const handleInputChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -129,16 +244,19 @@ export default function FolderDropZone({
 
     const allFiles = Array.from(files)
 
-    setIsProcessing(true)
+    // webkitdirectory는 브라우저가 파일을 이미 메모리로 읽어 완료 상태로 전달
+    // reading 단계는 즉시 완료로 보고 → 바로 다음 단계(부모)로 위임
+    onAnalyzeProgress?.({ stage: 'reading', current: allFiles.length, total: allFiles.length })
     try {
       await onFilesSelected(allFiles)
-    } finally {
-      setIsProcessing(false)
+    } catch (err) {
+      console.error('[FolderDropZone] 입력 처리 오류:', err)
+      onAnalyzeProgress?.(null)
     }
 
     // input 초기화 (같은 폴더 재선택 가능)
     e.target.value = ''
-  }, [onFilesSelected])
+  }, [onFilesSelected, onAnalyzeProgress])
 
   // showDirectoryPicker API로 브라우저 확인 모달 없이 폴더 선택
   const handleClick = useCallback(async () => {
@@ -150,14 +268,25 @@ export default function FolderDropZone({
       return
     }
 
+    let dirHandle: any
     try {
-      const dirHandle = await (window as any).showDirectoryPicker()
-      setIsProcessing(true)
+      dirHandle = await (window as any).showDirectoryPicker()
+    } catch (err: any) {
+      // 사용자가 취소한 경우 (AbortError) 무시 — 진행률 표시 시작 전
+      if (err?.name !== 'AbortError') {
+        console.error('폴더 선택 오류:', err)
+      }
+      return
+    }
 
+    const emitProgress = createProgressReporter()
+    emitProgress({ stage: 'reading', current: 0, total: null }, true)
+
+    try {
       const allFiles: File[] = []
 
-      // 디렉토리 병렬 탐색 (엔트리 수집 후 파일을 배치로 읽기)
-      async function readDir(handle: any, path: string) {
+      // 디렉토리 병렬 탐색 (엔트리 수집 후 파일을 청크로 병렬 읽기)
+      async function readDir(handle: any, path: string): Promise<void> {
         const entries: Array<{ entry: any; path: string }> = []
         const subdirs: Array<{ handle: any; path: string }> = []
 
@@ -169,10 +298,11 @@ export default function FolderDropZone({
           }
         }
 
-        // 파일을 50개씩 배치로 병렬 읽기
-        for (let i = 0; i < entries.length; i += 50) {
-          const batch = entries.slice(i, i + 50)
-          const files = await Promise.all(batch.map(async ({ entry, path: p }) => {
+        // 같은 디렉토리 내 파일을 청크 병렬로 읽기
+        // 기존: for 루프로 50개 배치 순차 → 청크(FILE_READ_CONCURRENCY)로 병렬화
+        for (let i = 0; i < entries.length; i += FILE_READ_CONCURRENCY) {
+          const chunk = entries.slice(i, i + FILE_READ_CONCURRENCY)
+          const files = await Promise.all(chunk.map(async ({ entry, path: p }) => {
             const file = await entry.getFile()
             const newFile = new File([file], file.name, { type: file.type, lastModified: file.lastModified })
             Object.defineProperty(newFile, 'webkitRelativePath', {
@@ -182,6 +312,8 @@ export default function FolderDropZone({
             return newFile
           }))
           allFiles.push(...files)
+          // 청크 완료마다 진행률 업데이트 (throttle 적용)
+          emitProgress({ stage: 'reading', current: allFiles.length, total: null })
         }
 
         // 하위 디렉토리 병렬 탐색
@@ -190,18 +322,21 @@ export default function FolderDropZone({
 
       await readDir(dirHandle, dirHandle.name)
 
+      // reading 단계 완료 flush (throttle 끝단 누락 방지)
+      emitProgress({ stage: 'reading', current: allFiles.length, total: null }, true)
+
       if (allFiles.length > 0) {
+        // 이후 단계(validating/matching/checking-storage)는 부모가 진행률을 보고함
         await onFilesSelected(allFiles)
+      } else {
+        // 파일 없음 — 진행률 리셋
+        onAnalyzeProgress?.(null)
       }
-    } catch (err: any) {
-      // 사용자가 취소한 경우 (AbortError) 무시
-      if (err.name !== 'AbortError') {
-        console.error('폴더 선택 오류:', err)
-      }
-    } finally {
-      setIsProcessing(false)
+    } catch (err) {
+      console.error('[FolderDropZone] 폴더 분석 오류:', err)
+      onAnalyzeProgress?.(null)
     }
-  }, [disabled, isProcessing, onFilesSelected])
+  }, [disabled, isProcessing, onFilesSelected, onAnalyzeProgress, createProgressReporter])
 
   return (
     <div
@@ -300,11 +435,17 @@ export default function FolderDropZone({
           webkitdirectory=""
           multiple
         />
-        {isProcessing ? (
+        {isProcessing && analyzeProgress ? (
           <>
             <div className="folder-processing-spinner" />
-            <span className="folder-drop-zone-title">폴더 분석 중...</span>
-            <span className="folder-drop-zone-description">파일을 읽고 있습니다</span>
+            <span className="folder-drop-zone-title">
+              {renderStageLabel(analyzeProgress.stage)}
+            </span>
+            <span className="folder-drop-zone-description">
+              <span className="folder-progress-count">
+                {renderStageCount(analyzeProgress)}
+              </span>
+            </span>
           </>
         ) : (
           <>
