@@ -2082,6 +2082,13 @@ async def _process_via_xpipe(
         })
         raise
 
+    # 파일 해시 계산 (SHA-256) — 모든 분기(에러/보관/변환대기/정상)에서 일관되게 사용
+    # IngestStage가 context["file_hash"]를 설정할 수 있으며, 없으면 재계산
+    # 프론트엔드 중복 검사(duplicateChecker)가 빈 해시를 제외하므로 반드시 저장 필요 (#68)
+    file_hash = context.get("file_hash") or result.get("file_hash") or ""
+    if not file_hash and file_content:
+        file_hash = hashlib.sha256(file_content).hexdigest()
+
     # ── 텍스트 추출 불가 파일 처리 (에러 아님) ──
     # ExtractStage에서 unsupported_format 또는 text_extraction_failed 플래그가 설정된 경우
     if result.get("text_extraction_failed"):
@@ -2114,6 +2121,7 @@ async def _process_via_xpipe(
                 "meta.filename": original_name,
                 "meta.extension": os.path.splitext(original_name or "")[1].lower(),
                 "meta.size_bytes": len(file_content) if file_content else 0,
+                "meta.file_hash": file_hash,
                 "upload.originalName": original_name,
                 "progressStage": "error",
                 "progress": 0,
@@ -2168,6 +2176,7 @@ async def _process_via_xpipe(
                     "meta.filename": original_name,
                     "meta.extension": os.path.splitext(original_name or "")[1].lower(),
                     "meta.size_bytes": len(file_content) if file_content else 0,
+                    "meta.file_hash": file_hash,
                     "upload.originalName": original_name,
                     "progressStage": "complete",
                     "progress": 100,
@@ -2220,6 +2229,7 @@ async def _process_via_xpipe(
                 "meta.filename": original_name,
                 "meta.extension": os.path.splitext(original_name or "")[1].lower(),
                 "meta.size_bytes": len(file_content) if file_content else 0,
+                "meta.file_hash": file_hash,
                 "upload.originalName": original_name,
                 "progressStage": "error",
                 "progress": 0,
@@ -2256,6 +2266,7 @@ async def _process_via_xpipe(
                 "meta.filename": original_name,
                 "meta.extension": os.path.splitext(original_name or "")[1].lower(),
                 "meta.size_bytes": len(file_content) if file_content else 0,
+                "meta.file_hash": file_hash,
                 "upload.originalName": original_name,
                 "progressStage": "conversion_queued",
                 "progress": 60,
@@ -2327,6 +2338,7 @@ async def _process_via_xpipe(
             "meta.filename": original_name,
             "meta.extension": os.path.splitext(original_name or "")[1].lower(),
             "meta.size_bytes": len(file_content) if file_content else 0,
+            "meta.file_hash": file_hash,
             "upload.originalName": original_name,
             "progressStage": "complete",
             "progress": 100,
@@ -2424,10 +2436,7 @@ async def _process_via_xpipe(
             file_size = 0
     file_ext = os.path.splitext(original_name or "")[1].lower()
 
-    # 파일 해시 계산 (SHA-256) — 레거시 meta_service와 동일 방식
-    file_hash = ""
-    if file_content:
-        file_hash = hashlib.sha256(file_content).hexdigest()
+    # file_hash는 파이프라인 실행 직후(위쪽)에서 이미 계산됨 — 중복 계산 제거 (#68)
 
     meta_update = {
         "meta.full_text": extracted_text,
