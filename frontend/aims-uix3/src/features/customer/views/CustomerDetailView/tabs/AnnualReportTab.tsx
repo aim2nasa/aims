@@ -31,48 +31,13 @@ import './AnnualReportTab.layout.css';
 import './AnnualReportTab.table.css';
 import './AnnualReportTab.states.css';
 import './AnnualReportTab.cfd-overrides.css';
+import { transformRawAnnualReport, type RawAnnualReportData } from './AnnualReportTab.transform';
 
 // 🍎 정렬 필드 타입
 type SortField = 'customer_name' | 'issue_date' | 'parsed_at' | 'total_monthly_premium' | 'contract_count' | 'status';
 type SortDirection = 'asc' | 'desc';
 
-// 백엔드 원시 응답 타입 정의
-interface RawAnnualReportData {
-  report_id?: string;
-  issue_date?: string;  // 실패 문서는 null일 수 있음
-  customer_name?: string;  // 실패 문서는 null일 수 있음
-  total_monthly_premium?: number | null;  // 실패 문서는 null
-  total_coverage?: number;
-  contract_count?: number | null;  // 실패 문서는 null
-  total_contracts?: number | null;  // 실패 문서는 null
-  created_at?: string;
-  uploaded_at?: string;
-  parsed_at?: string | null;  // 실패/진행중 문서는 null
-  file_hash?: string;
-  file_id?: string;
-  source_file_id?: string;  // 파일 ID (재시도용)
-  status?: 'completed' | 'error' | 'processing' | 'pending';  // 파싱 상태
-  error_message?: string;  // 에러 메시지
-  retry_count?: number;  // 재시도 횟수 (1~3)
-  fsr_name?: string;  // FSR(담당 설계사) 이름
-  report_title?: string;  // 리포트 제목
-  registered_at?: string;  // 보험계약 탭 등록일시
-  contracts?: Array<{
-    '증권번호': string;
-    '보험상품': string;
-    '계약자'?: string;
-    '피보험자'?: string;
-    '보험료(원)'?: number;
-    '월납입보험료'?: number;
-    '보장금액(원)'?: number;
-    '가입금액(만원)'?: number;
-    '계약일'?: string;
-    '납입기간'?: string;
-    '보험기간'?: string;
-    '계약상태'?: string;
-  }>;
-  lapsed_contracts?: Array<Record<string, unknown>>;
-}
+// 백엔드 원시 응답 타입 정의는 ./AnnualReportTab.transform.ts 참조 (이슈 #65).
 
 interface PendingDocument {
   file_id: string;
@@ -427,52 +392,10 @@ export const AnnualReportTab: React.FC<AnnualReportTabProps> = ({
       console.log('[AnnualReportTab] 🔴 API 응답:', response);
 
       if (response.success && response.data) {
-        // API 응답의 data 배열을 직접 AnnualReport 타입으로 변환
-        const transformedReports: AnnualReport[] = response.data.reports.map((rawData: RawAnnualReportData) => {
-          const mapContract = (contract: Record<string, unknown>) => ({
-            insurance_company: '메트라이프',
-            contract_number: (contract['증권번호'] || '') as string,
-            product_name: (contract['보험상품'] || '') as string,
-            contractor_name: (contract['계약자'] || '') as string,
-            insured_name: (contract['피보험자'] || '') as string,
-            monthly_premium: (contract['보험료(원)'] || 0) as number,
-            coverage_amount: ((contract['가입금액(만원)'] || 0) as number) * 10000,
-            contract_date: (contract['계약일'] || '') as string,
-            maturity_date: '',
-            premium_payment_period: (contract['납입기간'] || '') as string,
-            insurance_period: (contract['보험기간'] || '') as string,
-            status: (contract['계약상태'] || '') as string
-          });
-
-          const transformedContracts = (rawData.contracts || []).map(mapContract);
-          const transformedLapsedContracts = (rawData.lapsed_contracts || []).map(mapContract);
-
-          // 🔥 status 필드 처리: error/processing 상태는 null 값 유지
-          const status = rawData.status || 'completed';
-          const isFailedOrProcessing = status === 'error' || status === 'processing';
-
-          return {
-            report_id: rawData.file_id || rawData.source_file_id || `report_${rawData.parsed_at}`,
-            issue_date: rawData.issue_date || '',
-            // ⚠️ customer_name이 없으면 고객명으로 fallback하지 않음
-            // AR 문서의 소유주는 고객과 다를 수 있음 (예: 가족의 AR 문서)
-            customer_name: rawData.customer_name || '',
-            // 실패/진행중 문서는 null 유지, 완료된 문서는 0으로 fallback
-            total_monthly_premium: isFailedOrProcessing ? rawData.total_monthly_premium : (rawData.total_monthly_premium || 0),
-            total_coverage: rawData.total_coverage || 0,
-            contract_count: isFailedOrProcessing ? (rawData.total_contracts ?? rawData.contract_count) : (rawData.total_contracts || rawData.contract_count || 0),
-            contracts: transformedContracts,
-            lapsed_contracts: transformedLapsedContracts,
-            source_file_id: rawData.source_file_id || rawData.file_id || '',
-            created_at: rawData.uploaded_at || '',
-            parsed_at: isFailedOrProcessing ? rawData.parsed_at : (rawData.parsed_at || ''),
-            status: status,
-            error_message: rawData.error_message,
-            retry_count: rawData.retry_count,  // 재시도 횟수
-            fsr_name: rawData.fsr_name,
-            registered_at: rawData.registered_at,
-          };
-        });
+        // 이슈 #65: 변환 로직을 ./AnnualReportTab.transform.ts 로 분리하여 단위 테스트 가능하게 함.
+        const transformedReports: AnnualReport[] = response.data.reports.map(
+          (rawData: RawAnnualReportData) => transformRawAnnualReport(rawData),
+        );
 
         setReports(transformedReports);
       } else {
